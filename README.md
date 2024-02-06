@@ -14,14 +14,17 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 
 ## Configuration and Setup
 
-### Step 1: Creating S3 Buckets
-- Please make sure that you are in the **us-west-2** region. 
+### Step 1: Creating S3 Bucket
 
-- **Artifacts & Lambda layer Bucket**: Create a S3 bucket to store artifacts. For example, call it "artifacts-bedrock-agent-webscrape-alias". You will need to download, then add the API schema files to this S3 bucket. This .json file can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/jossai87-patch-1/schema/webscrape-schema.json). 
+- **Artifacts & Lambda layer Bucket**: Create an S3 bucket to store artifacts. For example, call it "artifacts-bedrock-agent-webscrape-alias". You will need to download, then add the API schema files to this S3 bucket. This .json file can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/jossai87-patch-1/schema/webscrape-schema.json). 
 
 The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Once uploaded, please select and open the .json documents to review the content.
 
 You will also need to add the lambda layer files, which can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/tree/jossai87-patch-1/lambda-layer). 
+
+![Bucket create 1](images/bucket_pic_1.png)
+
+![Bucket create 2](images/bucket_pic_2.png)
 
 ![Loaded Artifact](images/loaded_artifact.png)
 
