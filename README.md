@@ -1,9 +1,8 @@
 
-# Setup Amazon Bedrock Agent for Webscraping
+# Setup Amazon Bedrock Agent for Internet Searching & Webscraping 
 
 ## Introduction
 This guide details the setup process for an Amazon Bedrock agent on AWS, which will include setting up an S3 bucket, action group, and a Lambda function. We will use an action group that will webscrape a URL passed in from the user prompt. You can also request the agent to do an internet searh on something specific, without the need to provide a URL.
-
 
 ## Prerequisites
 - An active AWS Account.
@@ -15,17 +14,19 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 
 ## Configuration and Setup
 
-### Step 1: Creating an S3 Bucket
+### Step 1: Creating S3 Buckets
 - Please make sure that you are in the **us-west-2** region. 
 
-- **Artifacts & Lambda layer Bucket**: Create a S3 bucket to store artifacts. For example, call it "artifacts-bedrock-agent-creator-alias". You will need to download, then add the API schema file to this S3 bucket. This .json file can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/jossai87-patch-1/schema/webscrape-schema.json). 
+- **Artifacts & Lambda layer Bucket**: Create a S3 bucket to store artifacts. For example, call it "artifacts-bedrock-agent-webscrape-alias". You will need to download, then add the API schema files to this S3 bucket. This .json file can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/jossai87-patch-1/schema/webscrape-schema.json). 
 
-The provided schema is an OpenAPI specification for the "Webscrape API," which outlines the structure required to call the webscrape function via input and url. This API Schema is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. This schmea defines a primary endpoint, `/search` detailing how to interact with the API, the required parameter, and the expected responses.) Once uploaded, please select and open the .json document to review the content.
+The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Once uploaded, please select and open the .json documents to review the content.
+
+You will also need to add the lambda layer files, which can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/tree/jossai87-patch-1/lambda-layer). 
 
 ![Loaded Artifact](images/loaded_artifact.png)
 
 
-### Step 3: Lambda Function Configuration
+### Step 2: Lambda Function Configuration
 - Create a Lambda function (Python 3.11) for the Bedrock agent's action group. We will call this Lambda function "Webscrape-actions". 
 
 ![Create Function](Streamlit_App/images/create_function.png)
@@ -46,6 +47,11 @@ The provided schema is an OpenAPI specification for the "Webscrape API," which o
 
 ![Lambda resource policy](Streamlit_App/images/lambda_resource_policy.png)
 
+### Step 3: Create & attach Lambda layer
+- 
+
+
+
 
 ### Step 4: Setup Bedrock Agent and Action Group 
 - Navigate to the Bedrock console, go to the toggle on the left, and under “Orchestration” select Agents, then select “Create Agent”.
@@ -64,12 +70,12 @@ The provided schema is an OpenAPI specification for the "Webscrape API," which o
 
 ![Model select2](Streamlit_App/images/select_model.png)
 
-- When creating the agent, select Lambda function "Webscrape-actions". Next, select the schema file webscrape-schema.json from the s3 bucket "artifacts-bedrock-agent-creator-alias". Then, select "Next" 
+- When creating the agent, select Lambda function "Webscrape-actions". Next, select the schema file webscrape-schema.json from the s3 bucket "artifacts-bedrock-agent-webscrape-alias". Then, select "Next" 
 
 ![Add action group](Streamlit_App/images/action_group_add.png)
 
 
-## Step 7: Testing the Setup
+## Step 5: Testing the Setup
 
 ### Testing the Bedrock Agent
 - While in the Bedrock console, select “Agents” under the Orchestration tab, then the agent you created. You should be able to enter prompts in the user interface provided to test your knowledge base and action groups from the agent.
@@ -86,7 +92,7 @@ The provided schema is an OpenAPI specification for the "Webscrape API," which o
 After completing the setup and testing of the Bedrock Agent and Streamlit app, follow these steps to clean up your AWS environment and avoid unnecessary charges:
 1. Delete S3 Buckets:
 - Navigate to the S3 console.
-- Select the buckets "knowledgebase-bedrock-agent-alias" and "artifacts-bedrock-agent-creator-alias". Make sure that both of these buckets are empty by deleting the files. 
+- Select the buckets "knowledgebase-bedrock-agent-alias" and "artifacts-bedrock-agent-webscrape-alias". Make sure that both of these buckets are empty by deleting the files. 
 - Choose 'Delete' and confirm by entering the bucket name.
 
 2.	Remove Lambda Function:
