@@ -14,7 +14,7 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 
 ## Configuration and Setup
 
-### Step 1: Creating S3 Buckets
+### Step 1: Creating an S3 Bucket
 - Please make sure that you are in the **us-west-2** region. 
 
 - **Artifacts & Lambda layer Bucket**: Create a S3 bucket to store artifacts. For example, call it "artifacts-bedrock-agent-creator-alias". You will need to download, then add the API schema file to this S3 bucket. This .json file can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/jossai87-patch-1/schema/webscrape-schema.json). 
