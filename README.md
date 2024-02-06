@@ -10,7 +10,7 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 
 ## Diagram
 
-![Diagram](bedrock-agents-webscraper/images/bedrock-agent-webscrape-diagram.jpg)
+![Diagram](images/bedrock-agent-webscrape-diagram.jpg)
 
 ## Configuration and Setup
 
