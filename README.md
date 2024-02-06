@@ -21,7 +21,7 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 
 The provided schema is an OpenAPI specification for the "Webscrape API," which outlines the structure required to call the webscrape function via input and url. This API Schema is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. This schmea defines a primary endpoint, `/search` detailing how to interact with the API, the required parameter, and the expected responses.) Once uploaded, please select and open the .json document to review the content.
 
-![Loaded Artifact](Streamlit_App/images/loaded_artifact.png)
+![Loaded Artifact](images/loaded_artifact.png)
 
 
 ### Step 3: Lambda Function Configuration
