@@ -44,10 +44,10 @@ def upload_to_s3(bucket, key, content):
         print(f"Error while uploading {key} to S3: {e}")
         return None
 
-def search_google(query, num_results=5):
+def search_google(query):
     try:
         search_results = []
-        for j in search(query, num=5, stop=num_results, pause=10):
+        for j in search(query, sleep_interval=5, num_results=10):
             search_results.append(j)
         return search_results
     except Exception as e:
@@ -98,7 +98,7 @@ def handle_search(event, bucket_name):
             results.append({'url': url, 'error': 'Failed to fetch content'})
 
     # Define a single filename for the aggregated content
-    aggregated_filename = f"aggregated_{input_text.replace(' ', '_')}.txt"
+    aggregated_filename = f"aggregated-data-searched.txt"
     # Upload the aggregated content to S3
     upload_result = upload_to_s3(bucket_name, aggregated_filename, aggregated_content)
     if upload_result is not None:
