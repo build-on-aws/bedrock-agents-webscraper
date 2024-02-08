@@ -32,23 +32,23 @@ You will also need to add the lambda layer files, which can be found [here](http
 ### Step 2: Lambda Function Configuration
 - Create a Lambda function (Python 3.11) for the Bedrock agent's action group. We will call this Lambda function "Webscrape-actions". 
 
-![Create Function](Streamlit_App/images/create_function.png)
+![Create Function](images/create_function.png)
 
-![Create Function2](Streamlit_App/images/create_function2.png)
+![Create Function2](images/create_function2.png)
 
 - Copy the provided code from the ["lambda_webscrape.py"](https://github.com/build-on-aws/bedrock-agents-streamlit/blob/main/lambda_webscrape.py) file into your Lambda function. After, select the deploy button in the tab section in the Lambda console. Review the code provided before moving to the next step. (Make sure that the IAM role associated with the Bedrock agent can invoke the Lambda function)
 
-![Lambda deploy](Streamlit_App/images/lambda_deploy.png)
+![Lambda deploy](images/lambda_deploy.png)
 
 - Next, apply a resource policy to the Lambda to grant Bedrock agent access. To do this, we will switch the top tab from “code” to “configuration” and the side tab to “Permissions”. Then, scroll to the “Resource-based policy statements” section and click the “Add permissions” button.
 
-![Permissions config](Streamlit_App/images/permissions_config.png)
+![Permissions config](images/permissions_config.png)
 
-![Lambda resource policy create](Streamlit_App/images/lambda_resource_policy_create.png)
+![Lambda resource policy create](images/lambda_resource_policy_create.png)
 
 - Here is an example of the resource policy. (At this part of the setup, we will not have a Bedrock agent Source ARN. So, enter in "arn:aws:bedrock:us-west-2:{accoundID}:agent/BedrockAgentID" for now. We will include the ARN once it’s generated in step 6 after creating the Bedrock Agent alias):
 
-![Lambda resource policy](Streamlit_App/images/lambda_resource_policy.png)
+![Lambda resource policy](images/lambda_resource_policy.png)
 
 ### Step 3: Create & attach Lambda layer
 - Navigate to the AWS Lambda console, then select layers from the left-side panel, then create layer
