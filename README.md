@@ -55,11 +55,11 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 ![Lambda resource policy](images/lambda_resource_policy.png)
 
 
-- Next, we now need to adjust the config on the so that it has enough time, and CPU to handle the request. Navigate back to the Lambda function screen, then go to the Configurations tab, then General configuration and select Edit.
+- Next, we will adjust the configuration on the Lambda so that it has enough time, and CPU to handle the request. Navigate back to the Lambda function screen, go to the Configurations tab, then General configuration and select Edit.
 
 ![Lambda config 1](images/lambda_config_1.png)
 
-- Update Memory to 4048MB, Ephemeral storage 1024MB, and Timeout 1 minute. Leave the other settings as default, then select Save.
+- Update Memory to 4048MB, Ephemeral storage to 1024MB, and Timeout to 1 minute. Leave the other settings as default, then select Save.
 
 ![Lambda config 2](images/lambda_config_2.png)
 
