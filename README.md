@@ -51,7 +51,8 @@ You will also need to add the lambda layer files, which can be found [here](http
 ![Lambda resource policy](Streamlit_App/images/lambda_resource_policy.png)
 
 ### Step 3: Create & attach Lambda layer
-- 
+- Navigate to the AWS Lambda console, then select layers from the left-side panel, then create layer
+  ![lambda layer 1](images/lambda_layer_1.png)
 
 
 
