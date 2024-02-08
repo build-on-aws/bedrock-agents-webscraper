@@ -1,6 +1,5 @@
 import json
 import requests
-import os
 from googlesearch import search
 
 def get_page_content(url):
@@ -14,29 +13,10 @@ def get_page_content(url):
         print(f"Error while fetching content from {url}: {e}")
         return None
 
-def empty_tmp_directory():
-    for filename in os.listdir('/tmp'):
-        file_path = os.path.join('/tmp', filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.remove(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
-
-def save_content_to_tmp(content, filename):
-    with open(f'/tmp/{filename}', 'w') as file:
-        file.write(content)
-
-def read_content_from_tmp(filename):
-    with open(f'/tmp/{filename}', 'r') as file:
-        return file.read()
-
-def search_google(query, num_results=5):
+def search_google(query):
     try:
         search_results = []
-        for j in search(query, sleep_interval=5, num_results=10):
+        for j in search(query, sleep_interval=5, num_results=3):
             search_results.append(j)
         return search_results
     except Exception as e:
@@ -46,9 +26,6 @@ def search_google(query, num_results=5):
 def handle_search(event):
     input_text = event.get('inputText', '')  # Extract 'inputText' from the event
 
-    # Empty the /tmp directory before saving new files
-    empty_tmp_directory()
-
     # Proceed with Google search
     urls_to_scrape = search_google(input_text)
 
@@ -57,7 +34,6 @@ def handle_search(event):
         print("URLs Used: ", url)
         content = get_page_content(url)
         if content:
-            # Directly append the content to results without saving to /tmp
             results.append({
                 'url': url,
                 'content': content  # Consider truncating or summarizing for large content
@@ -79,7 +55,7 @@ def lambda_handler(event, context):
 
     response_body = {
         'application/json': {
-            'body': json.dumps(result)
+            'body': result
         }
     }
 
@@ -95,4 +71,3 @@ def lambda_handler(event, context):
     print("RESPONSE: ", action_response)
     
     return api_response
-    
