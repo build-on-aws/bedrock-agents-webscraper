@@ -7,7 +7,7 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 ## Prerequisites
 - An active AWS Account.
 - Familiarity with AWS services like Amazon Bedrock, S3, and Lambda.
-- Make sure that you have granted all of the models access via Amazon Bedrock console.
+- Make sure that you have granted access to all Amazon models, and Anthropic Claude model from the Amazon Bedrock console.
 
 ## Diagram
 
@@ -161,33 +161,25 @@ After, scroll down and select Save & Exit.
 
 ![Agent test 3](images/agent_test_3.png)
 
+**PLEASE NOTE**
+- When using the internet-search functionality, you could experience some level of hallucincation if you attempt to ask about information that is very recent. In order to control this behavior, more prompt engineering will need to be involved. 
 
 ## Cleanup
 
 After completing the setup and testing of the Bedrock Agent and Streamlit app, follow these steps to clean up your AWS environment and avoid unnecessary charges:
 1. Delete S3 Buckets:
 - Navigate to the S3 console.
-- Select the buckets "knowledgebase-bedrock-agent-alias" and "artifacts-bedrock-agent-webscrape-alias". Make sure that both of these buckets are empty by deleting the files. 
+- Select the buckets "artifacts-bedrock-agent-webscrape-alias". Make sure that this bucket is empty by deleting the files. 
 - Choose 'Delete' and confirm by entering the bucket name.
 
-2.	Remove Lambda Function:
+2.	Remove the Lambda Functions:
 - Go to the Lambda console.
-- Select the "PortfolioCreator-actions" function.
-- Click 'Delete' and confirm the action.
+- Select the "bedrock-agent-internet-search" function.
+- Click 'Delete' and confirm the action. Do the same for the webscraper function
 
 3.	Delete Bedrock Agent:
 - In the Bedrock console, navigate to 'Agents'.
 - Select the created agent, then choose 'Delete'.
-
-4.	Deregister Knowledge Base in Bedrock:
-- Access the Bedrock console, then navigate to “Knowledge base” under the Orchestration tab.
-- Select, then delete the created knowledge base.
-
-5.	Clean Up Cloud9 Environment:
-- Navigate to the Cloud9 management console.
-- Select the Cloud9 environment you created, then delete.
-
-
 
 
 ## Security
