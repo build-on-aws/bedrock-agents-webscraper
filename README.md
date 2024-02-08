@@ -30,7 +30,7 @@ You will also need to add the lambda layer files, which can be found [here](http
 
 
 ### Step 2: Lambda Function Configuration
-- Create a Lambda function (Python 3.11) for the Bedrock agent's action group. We will call this Lambda function "bedrock-agent-web-scrape". 
+- Create a Lambda function (Python 3.11) for the Bedrock agent's action group. We will call this Lambda function "bedrock-agent-webscrape". 
 
 ![Create Function](images/create_function.png)
 
@@ -54,6 +54,10 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 
 ![Lambda resource policy](images/lambda_resource_policy.png)
 
+
+- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the internet-search, using the ["lambda_internet_search.py"](https://github.com/build-on-aws/bedrock-agents-streamlit/blob/main/lambda_internet_search.py) code. Call this Lambda function "bedrock-agent-internet-search"
+
+
 ### Step 3: Create & attach Lambda layer
 
 -In order to create this Lambda layer, you will need a .zip file of the dependencies needed for your Lambda function, and in this case will be the requests library. I've already packaged the dependency, which you will download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/jossai87-patch-1/lambda-layer/googlesearch_requests_libraries.zip).  
@@ -64,14 +68,17 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 - Name of your lambda layer "googlesearch_requests_layer". Then select "Upload a .zip file" and navigate to the .zip file downloaded in the previous step. Also, select "x86_64" for your Compatible architectures, and Pyhton 3.11 for your runtime. Your choices should look similar to the example below. 
 ![lambda layer 2](images/lambda_layer_2.png)
 
--Navigate back to Lambda function "bedrock-agent-web-scrape", with Code tab selected. Scroll to the Layers section and select "Add a Layer"
+-Navigate back to Lambda function "bedrock-agent-webscrape", with Code tab selected. Scroll to the Layers section and select "Add a Layer"
 
 ![lambda layer 3](images/lambda_layer_3.png)
+
 ![lambda layer 4](images/lambda_layer_4.png)
 
-- Choose the Custom layers option. from the drop down, select the layer you created "googlesearch_requests_layer", with version of 1. Then, select the Add button. Navigate back to your Lambda function, and verify that it has been added.
+- Choose the Custom layers option from the drop down, select the layer you created "googlesearch_requests_layer", and version 1. After, select the Add button. Navigate back to your Lambda function, and verify that the layer has been added.
 
 ![lambda layer 5](images/lambda_layer_5.png)
+
+- You are now done creating and adding the dependencies needed via Lambda layer for your webscrape function. Now, add this same layer to the Lambda function "bedrock-agent-internet-search", and verify that it has been added successfully.
 
 
 ### Step 4: Setup Bedrock Agent and Action Group 
@@ -79,21 +86,48 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 
 ![Orchestration2](images/orchestration2.png)
 
-- On the next screen, provide an agent name, like Webscrape-Agent. Leave the other options as default, then select “Next”
+- On the next screen, provide an agent name, like WebscrapeAgent. Leave the other options as default, then select “Next”
 
-![Agent details](Streamlit_App/images/agent_details.png)
+![Agent details](images/agent_details.png)
 
-![Agent details 2](Streamlit_App/images/agent_details_2.png)
+![Agent details 2](images/agent_details_2.png)
 
 - Select the Anthropic: Claude V2.1 model. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific direction on how the model should use tools to answer questions. Copy, then paste the details below into the agent instructions. 
 
-"This is an agent that assists with internet searches based on <user-request>. This agent can also use proprietary data to help summarize all returned data when requested."
+"You are an agent that will be used to webscrape individual urls, or dynamically search multiple web sources to provide information based on a <user-request>." 
 
-![Model select2](Streamlit_App/images/select_model.png)
+Then, select Next.
 
-- When creating the agent, select Lambda function "bedrock-agent-web-scrape". Next, select the schema file webscrape-schema.json from the s3 bucket "artifacts-bedrock-agent-webscrape-alias". Then, select "Next" 
+![Model select2](images/select_model.png)
 
-![Add action group](Streamlit_App/images/action_group_add.png)
+- Provide an action group name like "webscrape". Select the Lambda function "bedrock-agent-webscrape". For the S3 Url, select the schema webscrape-schema.json file in the S3 bucket "artifacts-bedrock-agent-webscrape-alias".
+
+![Add action group](images/action_group_add.png)
+
+After, select Next, then Next again as we are not adding a knowledge base. On the last screen, select Create Agent.
+
+- You are now done setting up the webscrape action group. You will need to create another action group following the exact same process for the internet-search, using the schema internet-search-schema.json file.
+
+
+### Step 5: Modify Bedrock Agent Advance Prompts
+- Once your agent is created, we need to modify the advance prompts in the Bedrock agent for pre-processing so that the agent will allow us to use webscraping and internet searching. Navigate back to the Agent overview screen for your WebscrapeAgent, like below. 
+
+![bedrock agent screen 1](images/bedrock_agent_screen_1.png)
+
+- Scroll down, then select Working draft. Then, under Advanced prompts, select Edit
+![bedrock agent screen 2](images/bedrock_agent_screen_2.png)
+
+- Your tab should already have auto selected "Pre-processing". Toggle the "Override pre-processing template defaults" radio button on. Also, make sure that the "Activate pre-processing template" radio button is also on like below.
+
+![bedrock agent screen 3](images/bedrock_agent_screen_3.png)
+
+- Under the prompt template editor, you will notice that you now have access to control the pre-built prompts. Scroll down to line 16 where it has "Category D". Replace this category with the following:
+
+"-Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function." 
+
+After, scroll down and select Save & Exit.
+
+![bedrock agent screen 4](images/bedrock_agent_screen_4.png)
 
 
 ## Step 5: Testing the Setup
@@ -101,11 +135,21 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 ### Testing the Bedrock Agent
 - While in the Bedrock console, select “Agents” under the Orchestration tab, then the agent you created. You should be able to enter prompts in the user interface provided to test your knowledge base and action groups from the agent.
 
-![Agent test](Streamlit_App/images/agent_test.png)
+![Agent test](images/agent_test.png)
 
-- Example prompts for Action Groups:
+- Example prompts for webscrape action group:
    1. Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu"
    2. Webscrape this url and tell me the main villians that Goku had to protect on planet earth "https://en.wikipedia.org/wiki/Goku"
+
+![Agent test 2](images/agent_test_2.png)
+
+
+- Example prompts for internet search action group:
+   1. Do an internet search and tell me the top 3 best traits about lebron james
+   2. Do an internet search and tell me how do i know when foods are healthy for me
+   3. Do an internet search and tell me the top 3 strongest features of charizard from pokemon
+
+![Agent test 3](images/agent_test_3.png)
 
 
 ## Cleanup
