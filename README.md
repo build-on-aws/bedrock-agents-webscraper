@@ -7,6 +7,7 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 ## Prerequisites
 - An active AWS Account.
 - Familiarity with AWS services like Amazon Bedrock, S3, and Lambda.
+- Make sure that you have granted all of the models access via Amazon Bedrock console.
 
 ## Diagram
 
@@ -62,6 +63,7 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 - Update Memory to 4048MB, Ephemeral storage to 1024MB, and Timeout to 1 minute. Leave the other settings as default, then select Save.
 
 ![Lambda config 2](images/lambda_config_2.png)
+
 
 - You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the internet-search, using the ["lambda_internet_search.py"](https://github.com/build-on-aws/bedrock-agents-streamlit/blob/main/lambda_internet_search.py) code. Call this Lambda function "bedrock-agent-internet-search"
 
