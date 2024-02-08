@@ -36,7 +36,7 @@ def read_content_from_tmp(filename):
 def search_google(query, num_results=5):
     try:
         search_results = []
-        for j in search(query, num=10, stop=num_results, pause=3):
+        for j in search(query, sleep_interval=5, num_results=10):
             search_results.append(j)
         return search_results
     except Exception as e:
