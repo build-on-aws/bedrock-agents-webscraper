@@ -1,11 +1,7 @@
 import requests
-import boto3
-import io
-#from googlesearch import search
+import os
 
-s3 = boto3.client('s3')
-
-#fetch url and extract text
+# Fetch URL and extract text
 def get_page_content(url):
     try:
         response = requests.get(url)
@@ -13,7 +9,6 @@ def get_page_content(url):
             print(f"Redirect detected for {url}")
             return None  # Return None to indicate a redirect occurred
         elif response:
-            #print(f"Response from URL: ", response.text)
             return response.text
         else:
             raise Exception("No response from the server.")
@@ -21,50 +16,45 @@ def get_page_content(url):
         print(f"Error while fetching content from {url}: {e}")
         return None
 
-def empty_s3_bucket(bucket_name):
+def empty_tmp_folder():
     try:
-        # List objects in the S3 bucket
-        objects = s3.list_objects_v2(Bucket=bucket_name)
-        if 'Contents' in objects:
-            # Delete objects
-            for obj in objects['Contents']:
-                s3.delete_object(Bucket=bucket_name, Key=obj['Key'])
-            return "All objects deleted from bucket."
-        else:
-            return "Bucket is already empty."
+        for filename in os.listdir('/tmp'):
+            file_path = os.path.join('/tmp', filename)
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        return "Temporary folder emptied."
     except Exception as e:
-        print(f"Error while emptying S3 bucket {bucket_name}: {e}")
+        print(f"Error while emptying /tmp folder: {e}")
         return None
 
-def upload_to_s3(bucket, key, content):
+def save_to_tmp(filename, content):
     try:
         if content is not None:
-            s3.upload_fileobj(io.BytesIO(content.encode()), bucket, key)
-            return f"Uploaded {key} to {bucket}"
+            with open(f'/tmp/{filename}', 'w') as file:
+                file.write(content)
+            return f"Saved {filename} to /tmp"
         else:
-            raise Exception("No content to upload.")
+            raise Exception("No content to save.")
     except Exception as e:
-        print(f"Error while uploading {key} to S3: {e}")
+        print(f"Error while saving {filename} to /tmp: {e}")
         return None
 
-
-
-def check_s3_for_data(bucket_name, query):
+def check_tmp_for_data(query):
     try:
-        objects = s3.list_objects_v2(Bucket=bucket_name, Prefix=query)
-        if 'Contents' in objects:
-            data = []
-            for obj in objects['Contents']:
-                data.append(s3.get_object(Bucket=bucket_name, Key=obj['Key']))
-            return data
-        else:
-            return None
+        data = []
+        for filename in os.listdir('/tmp'):
+            if query in filename:
+                with open(f'/tmp/{filename}', 'r') as file:
+                    data.append(file.read())
+        return data if data else None
     except Exception as e:
-        print(f"Error while checking S3 bucket {bucket_name} for query {query}: {e}")
+        print(f"Error while checking /tmp for query {query}: {e}")
         return None
 
-#get extractd text and url
-def handle_search(event, bucket_name):
+# Modify handle_search function to use tmp folder instead of S3
+def handle_search(event):
     # Extract 'inputURL' from parameters
     parameters = event.get('parameters', [])
     input_url = next((param['value'] for param in parameters if param['name'] == 'inputURL'), '')
@@ -76,15 +66,15 @@ def handle_search(event, bucket_name):
     if not input_url.startswith(('http://', 'https://')):
         input_url = 'http://' + input_url
 
-    # Check S3 bucket first
-    s3_data = check_s3_for_data(bucket_name, input_url)
-    if s3_data:
-        return {"results": s3_data}
+    # Check /tmp directory first
+    tmp_data = check_tmp_for_data(input_url)
+    if tmp_data:
+        return {"results": tmp_data}
 
-    # Empty the S3 bucket before uploading new files
-    empty_bucket_result = empty_s3_bucket(bucket_name)
-    if empty_bucket_result is None:
-        return {"error": "Failed to empty S3 bucket"}
+    # Empty the /tmp directory before saving new files
+    empty_tmp_result = empty_tmp_folder()
+    if empty_tmp_result is None:
+        return {"error": "Failed to empty /tmp folder"}
 
     # Scrape content from the provided URL
     content = get_page_content(input_url)
@@ -92,16 +82,13 @@ def handle_search(event, bucket_name):
         return {"error": "Failed to retrieve content"}
 
     filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
-    upload_result = upload_to_s3(bucket_name, filename, content)
-    #print("CONTENT: ", content)
-    if upload_result is None:
-        return {"error": "Failed to upload to S3"}
+    save_result = save_to_tmp(filename, content)
+    if save_result is None:
+        return {"error": "Failed to save to /tmp"}
 
-    return {"results": {'url': input_url, 's3_upload_result': upload_result}}
+    return {"results": {'url': input_url, 'tmp_save_result': save_result}}
 
-
-    
-    
+# Modify lambda_handler accordingly
 def lambda_handler(event, context):
     response_code = 200
     action_group = event['actionGroup']
@@ -109,10 +96,8 @@ def lambda_handler(event, context):
 
     print("THE EVENT: ", event)
     
-    bucket_name = 'bedrock-agent-searched-data-jo-west'  # Replace with your S3 bucket name
-    
     if api_path == '/search':
-        result = handle_search(event, bucket_name)
+        result = handle_search(event)
     else:
         response_code = 404
         result = f"Unrecognized api path: {action_group}::{api_path}"
@@ -135,4 +120,3 @@ def lambda_handler(event, context):
     print("RESPONSE: ", action_response)
     
     return api_response
-    
