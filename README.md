@@ -10,8 +10,8 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 - Make sure that you have granted access to all Amazon models, and Anthropic Claude model from the Amazon Bedrock console.
 
 ## Library dependencies
-- ![requests](https://pypi.org/project/requests/)
-- ![googlesearch-python](https://pypi.org/project/googlesearch-python/)
+- [requests](https://pypi.org/project/requests/)
+- [googlesearch-python](https://pypi.org/project/googlesearch-python/)
 
 
 
