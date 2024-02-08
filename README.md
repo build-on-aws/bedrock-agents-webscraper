@@ -30,13 +30,17 @@ You will also need to add the lambda layer files, which can be found [here](http
 
 
 ### Step 2: Lambda Function Configuration
-- Create a Lambda function (Python 3.11) for the Bedrock agent's action group. We will call this Lambda function "Webscrape-actions". 
+- Create a Lambda function (Python 3.11) for the Bedrock agent's action group. We will call this Lambda function "bedrock-agent-web-scrape". 
 
 ![Create Function](images/create_function.png)
 
 ![Create Function2](images/create_function2.png)
 
-- Copy the provided code from the ["lambda_webscrape.py"](https://github.com/build-on-aws/bedrock-agents-streamlit/blob/main/lambda_webscrape.py) file into your Lambda function. After, select the deploy button in the tab section in the Lambda console. Review the code provided before moving to the next step. (Make sure that the IAM role associated with the Bedrock agent can invoke the Lambda function)
+- Copy the provided code from the ["lambda_webscrape.py"](https://github.com/build-on-aws/bedrock-agents-streamlit/blob/main/lambda_webscrape.py) file into your Lambda function. After, select the deploy button in the tab section in the Lambda console. 
+
+This code takes the url from the event passed in from the bedrock agent, then uses the requests library to call, then scrape the webpage. The scraped data is saved to a .txt file in the /tmp directory of the Lambda function, then passed into the response back to the agent.
+
+Review the code provided before moving to the next step. (Make sure that the IAM role associated with the Bedrock agent can invoke the Lambda function)
 
 ![Lambda deploy](images/lambda_deploy.png)
 
@@ -51,16 +55,29 @@ You will also need to add the lambda layer files, which can be found [here](http
 ![Lambda resource policy](images/lambda_resource_policy.png)
 
 ### Step 3: Create & attach Lambda layer
-- Navigate to the AWS Lambda console, then select layers from the left-side panel, then create layer
+
+-In order to create this Lambda layer, you will need a .zip file of the dependencies needed for your Lambda function, and in this case will be the requests library. I've already packaged the dependency, which you will download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/jossai87-patch-1/lambda-layer/googlesearch_requests_libraries.zip).  
+
+- After, navigate to the AWS Lambda console, then select layers from the left-side panel, then create layer.
   ![lambda layer 1](images/lambda_layer_1.png)
 
+- Name of your lambda layer "googlesearch_requests_layer". Then select "Upload a .zip file" and navigate to the .zip file downloaded in the previous step. Also, select "x86_64" for your Compatible architectures, and Pyhton 3.11 for your runtime. Your choices should look similar to the example below. 
+![lambda layer 2](images/lambda_layer_2.png)
 
+-Navigate back to Lambda function "bedrock-agent-web-scrape", with Code tab selected. Scroll to the Layers section and select "Add a Layer"
+
+![lambda layer 3](images/lambda_layer_3.png)
+![lambda layer 4](images/lambda_layer_4.png)
+
+- Choose the Custom layers option. from the drop down, select the layer you created "googlesearch_requests_layer", with version of 1. Then, select the Add button. Navigate back to your Lambda function, and verify that it has been added.
+
+![lambda layer 5](images/lambda_layer_5.png)
 
 
 ### Step 4: Setup Bedrock Agent and Action Group 
 - Navigate to the Bedrock console, go to the toggle on the left, and under “Orchestration” select Agents, then select “Create Agent”.
 
-![Orchestration2](Streamlit_App/images/orchestration2.png)
+![Orchestration2](images/orchestration2.png)
 
 - On the next screen, provide an agent name, like Webscrape-Agent. Leave the other options as default, then select “Next”
 
@@ -68,13 +85,13 @@ You will also need to add the lambda layer files, which can be found [here](http
 
 ![Agent details 2](Streamlit_App/images/agent_details_2.png)
 
-- Select the Anthropic: Claude V1.2 model. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific direction on how the model should use tools to answer questions. Copy, then paste the details below into the agent instructions. 
+- Select the Anthropic: Claude V2.1 model. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific direction on how the model should use tools to answer questions. Copy, then paste the details below into the agent instructions. 
 
 "This is an agent that assists with internet searches based on <user-request>. This agent can also use proprietary data to help summarize all returned data when requested."
 
 ![Model select2](Streamlit_App/images/select_model.png)
 
-- When creating the agent, select Lambda function "Webscrape-actions". Next, select the schema file webscrape-schema.json from the s3 bucket "artifacts-bedrock-agent-webscrape-alias". Then, select "Next" 
+- When creating the agent, select Lambda function "bedrock-agent-web-scrape". Next, select the schema file webscrape-schema.json from the s3 bucket "artifacts-bedrock-agent-webscrape-alias". Then, select "Next" 
 
 ![Add action group](Streamlit_App/images/action_group_add.png)
 
