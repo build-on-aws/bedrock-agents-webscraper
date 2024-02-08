@@ -1,4 +1,4 @@
-import requests
+]import requests
 import os
 
 # Fetch URL and extract text
