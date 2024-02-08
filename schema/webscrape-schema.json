@@ -1,0 +1,44 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Webscrape API", 
+    "description": "An API that will take in a URL, then scrape and store the content from the URL in an S3 bucket.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/search": {
+      "post": {
+        "description": "content scraping endpoint",
+        "parameters": [
+          {
+            "name": "inputURL",
+            "in": "query",
+            "description": "URL to scrape content from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "upload_result": {
+                      "type": "string",
+                      "description": "Result of uploading content to S3"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
