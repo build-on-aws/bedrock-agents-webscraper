@@ -132,7 +132,7 @@ Then, select Next.
 
 ![bedrock agent screen 1](images/bedrock_agent_screen_1.png)
 
-- Scroll down, then select Working draft. Then, under Advanced prompts, select Edit
+- Scroll down, then select Working draft. Under Advanced prompts, select Edit.
 
 ![bedrock agent screen 2](images/bedrock_agent_screen_2.png)
 
@@ -140,9 +140,9 @@ Then, select Next.
 
 ![bedrock agent screen 3](images/bedrock_agent_screen_3.png)
 
-- Under *prompt template editor*, you will notice that you now have access to control the pre-built prompts. Scroll down to line 16 where it has "Category D". Replace this category with the following:
+- Under *prompt template editor*, you will notice that you now have access to control the pre-built prompts. Scroll down to until you see "Category D". Replace this category section with the following:
 
-   "-Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function." 
+   `-Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function.`
 
    After, scroll down and select Save & Exit.
 
