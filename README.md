@@ -45,7 +45,7 @@
 
 ![Create Function](images/create_function.png)
 
-![Create Function2](images/create_function2.png)
+![Create Function2](images/create_function_2.png)
 
 - Copy the provided code from the ["lambda_webscrape.py"](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_webscrape.py) file into your Lambda function. After, select the deploy button in the tab section in the Lambda console. 
 
