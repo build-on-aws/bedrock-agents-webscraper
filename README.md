@@ -2,9 +2,7 @@
 # Setup Amazon Bedrock Agent for Webscrape & Internet Search
 
 ## Introduction
- We will setup an Amazon Bedrock agent with two action groups. This Bedrock agent will have the ability to webscrape a specific URL provided from the user prompt. You will also have the option to do an internet search to query something specific, without providing a URL. 
- 
- This guide details the setup process for an Amazon Bedrock agent on AWS, which will include setting up an S3 bucket, action group, and a Lambda function.
+ We will setup an Amazon Bedrock agent with two action groups. This Bedrock agent will have the ability to webscrape a specific URL provided from the user prompt. You will also have the option to do an internet search to query something specific, without providing a URL. This setup will include creating a Bedrock agent, action group, S3 bucket, and a two Lambda functions.
 
 ## Prerequisites
 - An active AWS Account.
