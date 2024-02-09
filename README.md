@@ -140,7 +140,7 @@ Then, select Next.
 
 ![bedrock agent screen 3](images/bedrock_agent_screen_3.png)
 
-- Under *prompt template editor*, you will notice that you now have access to control the pre-built prompts. Scroll down to "Category D" and replace this section with the following:
+- Under *prompt template editor*, you will notice that you now have access to control the pre-built prompts. Scroll down to until you see "Category D". Replace this category section with the following:
 
    `-Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function.`
 
@@ -167,7 +167,7 @@ Then, select Next.
 
 - Example prompts for internet search action group:
    1. Do an internet search and tell me the top 3 best traits about lebron james
-   2. Do an internet search and tell me how do I know when foods are healthy for me
+   2. Do an internet search and tell me how do I know what foods are healthy for me
    3. Do an internet search and tell me the top 3 strongest features of charizard from pokemon
 
 ![Agent test 3](images/agent_test_3.png)
