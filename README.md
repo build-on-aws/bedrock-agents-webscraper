@@ -142,7 +142,7 @@ Then, select Next.
 
 ![bedrock agent screen 3](images/bedrock_agent_screen_3.png)
 
-- Under the prompt template editor, you will notice that you now have access to control the pre-built prompts. Scroll down to line 16 where it has "Category D". Replace this category with the following:
+- Under the *prompt template editor*, you will notice that you now have access to control the pre-built prompts. Scroll down to line 16 where it has "Category D". Replace this category with the following:
 
    "-Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function." 
 
