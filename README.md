@@ -172,6 +172,11 @@ Then, select Next.
 
 ![Agent test 3](images/agent_test_3.png)
 
+   (After executing the internet-search function, you can navigate to the CloudWatch logs for this Lambda, and observe the URLs that the data was scraped from, along with other details. You will notice that all URLs will not allow scraping, so the code is designed to error those attempts, and continue with the operation.)
+
+![Lambda logs](images/lambda_logs.png)
+
+
 - **PLEASE NOTE:** when using the webscraper and internet-search     functionality, you could experience some level of hallucincation, innacuracies, or error if you attempt to ask about information that is very recent, if the prompt is too vague, or if the endpoint cannot be accessed or has a redirect. 
 
    There is also minimal control over which urls are selected during the internet search, except for the # of urls selected from within the google search function parameters. In order to help control this behavior, more engineering will need to be involved. 
