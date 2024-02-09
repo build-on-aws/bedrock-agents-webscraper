@@ -27,11 +27,13 @@ This guide details the setup process for an Amazon Bedrock agent on AWS, which w
 
 The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Once uploaded, please select and open the .json documents to review the content.
 
-You will also need to add the lambda layer file, which can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip). 
+You will also need to download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip). 
 
 ![Bucket create 1](images/bucket_pic_1.png)
 
+
 ![Bucket create 2](images/bucket_pic_2.png)
+
 
 ![Loaded Artifact](images/loaded_artifact.png)
 
@@ -45,7 +47,7 @@ You will also need to add the lambda layer file, which can be found [here](https
 
 - Copy the provided code from the ["lambda_webscrape.py"](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_webscrape.py) file into your Lambda function. After, select the deploy button in the tab section in the Lambda console. 
 
-This code takes the url from the event passed in from the bedrock agent, then uses the requests library to call, then scrape the webpage. The scraped data is saved to a .txt file in the /tmp directory of the Lambda function, then passed into the response back to the agent.
+This code takes the url from the event passed in from the bedrock agent, then uses the requests library to call, then scrape the webpage. The scraped data is saved to the /tmp directory of the Lambda function, then passed into the response back to the agent.
 
 Review the code provided before moving to the next step. (Make sure that the IAM role associated with the Bedrock agent can invoke the Lambda function)
 
@@ -57,7 +59,7 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 
 ![Lambda resource policy create](images/lambda_resource_policy_create.png)
 
-- Here is an example of the resource policy. (At this part of the setup, we will not have a Bedrock agent Source ARN. So, enter in "arn:aws:bedrock:us-west-2:{accoundID}:agent/BedrockAgentID" for now. We will include the ARN once it’s generated in step 6 after creating the Bedrock Agent alias):
+- Here is an example of the resource policy. (At this part of the setup, we will not have a Bedrock agent Source ARN. So, enter in "arn:aws:bedrock:us-west-2:{accoundID}:agent/BedrockAgentID" for now. We will include the ARN once it’s generated in step 4 after creating the Bedrock agent)
 
 ![Lambda resource policy](images/lambda_resource_policy.png)
 
@@ -71,17 +73,17 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 ![Lambda config 2](images/lambda_config_2.png)
 
 
-- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the internet-search, using the ["lambda_internet_search.py"](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_internet_search.py) code. Call this Lambda function "bedrock-agent-internet-search"
+- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the internet-search, using the ["lambda_internet_search.py"](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_internet_search.py) code. Name this Lambda function "bedrock-agent-internet-search"
 
 
 ### Step 3: Create & attach Lambda layer
 
--In order to create this Lambda layer, you will need a .zip file of the dependencies needed for your Lambda function, and in this case will be the requests library. I've already packaged the dependency, that you can download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip).  
+- In order to create this Lambda layer, you will need a .zip file of the dependencies needed for the Lambda function that are not natively provided. In this case, we are using the requests and googlesearrch libraries for the internet searching and web scraping. I've already packaged the dependencies that you can download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip).  
 
 - After, navigate to the AWS Lambda console, then select layers from the left-side panel, then create layer.
   ![lambda layer 1](images/lambda_layer_1.png)
 
-- Name of your lambda layer "googlesearch_requests_layer". Then select "Upload a .zip file" and navigate to the .zip file downloaded in the previous step. Also, select "x86_64" for your Compatible architectures, and Pyhton 3.11 for your runtime. Your choices should look similar to the example below. 
+- Name your lambda layer "googlesearch_requests_layer". Select "Upload a .zip file" and choose the .zip file of dependencies. Choose "x86_64" for your Compatible architectures, and Pyhton 3.11 for your runtime. Your choices should look similar to the example below. 
 ![lambda layer 2](images/lambda_layer_2.png)
 
 -Navigate back to Lambda function "bedrock-agent-webscrape", with Code tab selected. Scroll to the Layers section and select "Add a Layer"
@@ -90,7 +92,7 @@ Review the code provided before moving to the next step. (Make sure that the IAM
 
 ![lambda layer 4](images/lambda_layer_4.png)
 
-- Choose the Custom layers option from the drop down, select the layer you created "googlesearch_requests_layer", and version 1. After, select the Add button. Navigate back to your Lambda function, and verify that the layer has been added.
+- Choose the Custom layers option from the drop down, select the layer you created "googlesearch_requests_layer", and version 1. Then, select Add. Navigate back to your Lambda function, and verify that the layer has been added.
 
 ![lambda layer 5](images/lambda_layer_5.png)
 
@@ -122,7 +124,7 @@ Then, select Next.
 
 After, select Next, then Next again as we are not adding a knowledge base. On the last screen, select Create Agent.
 
-- You are now done setting up the webscrape action group. You will need to create another action group following the exact same process for the internet-search, using the schema internet-search-schema.json file.
+- You are now done setting up the webscrape action group. You will need to create another action group following the exact same process for the internet-search, using the schema [internet-search-schema.json](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/schema/internet-search-schema.json) file.
 
 
 ### Step 5: Modify Bedrock Agent Advance Prompts
@@ -131,9 +133,10 @@ After, select Next, then Next again as we are not adding a knowledge base. On th
 ![bedrock agent screen 1](images/bedrock_agent_screen_1.png)
 
 - Scroll down, then select Working draft. Then, under Advanced prompts, select Edit
+
 ![bedrock agent screen 2](images/bedrock_agent_screen_2.png)
 
-- Your tab should already have auto selected "Pre-processing". Toggle the "Override pre-processing template defaults" radio button on. Also, make sure that the "Activate pre-processing template" radio button is also on like below.
+- Your tab should already be on "Pre-processing". Toggle on the "Override pre-processing template defaults" radio button. Also make sure the "Activate pre-processing template" radio button is on like below.
 
 ![bedrock agent screen 3](images/bedrock_agent_screen_3.png)
 
@@ -149,13 +152,14 @@ After, scroll down and select Save & Exit.
 ## Step 5: Testing the Setup
 
 ### Testing the Bedrock Agent
-- While in the Bedrock console, select “Agents” under the Orchestration tab, then the agent you created. You should be able to enter prompts in the user interface provided to test your knowledge base and action groups from the agent.
+- While in the Bedrock console, select “Agents” under the Orchestration tab, following the agent you created. You should be able to enter prompts in the user interface provided to test your action groups from the Bedrock agent.
 
 ![Agent test](images/agent_test.png)
 
 - Example prompts for webscrape action group:
    1. Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu"
    2. Webscrape this url and tell me the main villians that Goku had to protect on planet earth "https://en.wikipedia.org/wiki/Goku"
+   3. Webscrape this url that is a book, and summarize it "https://en.wikipedia.org/wiki/Romeo_%2B_Juliet"
 
 ![Agent test 2](images/agent_test_2.png)
 
@@ -168,10 +172,9 @@ After, scroll down and select Save & Exit.
 ![Agent test 3](images/agent_test_3.png)
 
 **PLEASE NOTE**
-- When using the internet-search functionality, you could experience some level of hallucincation if you attempt to ask about information that is very recent. In order to control this behavior, more prompt engineering will need to be involved. 
+- When using the internet-search functionality, you could experience some level of hallucincation if you attempt to ask about information that is very recent, or url does not contain a valid TLD (top-level-domain). In order to control this behavior, more prompt engineering will need to be involved. 
 
 ## Cleanup
-
 After completing the setup and testing of the Bedrock Agent and Streamlit app, follow these steps to clean up your AWS environment and avoid unnecessary charges:
 1. Delete S3 Buckets:
 - Navigate to the S3 console.
