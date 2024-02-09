@@ -180,7 +180,8 @@ Then, select Next.
 
 
 ## Cleanup
-After completing the setup and testing of the Bedrock Agent and Streamlit app, follow these steps to clean up your AWS environment and avoid unnecessary charges:
+After completing the setup and testing of the Bedrock agent, follow these steps to clean up your AWS environment and avoid unnecessary charges:
+
 1. Delete S3 Buckets:
 - Navigate to the S3 console.
 - Select the buckets "artifacts-bedrock-agent-webscrape-alias". Make sure that this bucket is empty by deleting the files. 
