@@ -112,9 +112,9 @@
 
 ![Agent details 2](images/agent_details_2.png)
 
-- Select the Anthropic: Claude V2.1 model. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific direction on how the model should use tools to answer questions. Copy, then paste the details below into the agent instructions. 
+- Select the Anthropic: Claude V2.1 model. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. 
 
-   "You are an agent that will be used to webscrape individual urls, or dynamically search multiple web sources to provide information based on a <user-request>." 
+   "You are a research analyst that webscrapes websites, and searches the internet to provide information based on a <user-request>. You provide short, concise answers in a friendly manner." 
 
 Then, select Next.
 
@@ -161,7 +161,7 @@ Then, select Next.
 - Example prompts for webscrape action group:
    1. Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu"
    2. Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku"
-   3. Webscrape this url and tell me about Romeo "https://en.wikipedia.org/wiki/Romeo_%2B_Juliet"
+   3. Webscrape this url, and tell me about Romeo "https://en.wikipedia.org/wiki/Romeo_%2B_Juliet"
 
 
 ![Agent test 2](images/agent_test_2.png)
