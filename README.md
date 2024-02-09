@@ -186,10 +186,11 @@ After completing the setup and testing of the Bedrock Agent and Streamlit app, f
 - Select the buckets "artifacts-bedrock-agent-webscrape-alias". Make sure that this bucket is empty by deleting the files. 
 - Choose 'Delete' and confirm by entering the bucket name.
 
-2.	Remove the Lambda Functions:
+2.	Remove the Lambda Functions and Layers:
 - Go to the Lambda console.
 - Select the "bedrock-agent-internet-search" function.
 - Click 'Delete' and confirm the action. Do the same for the webscraper function
+- Be sure to navigate to the layers tab in the Lambda console, and delete "googlesearch_requests_layer"
 
 3.	Delete Bedrock Agent:
 - In the Bedrock console, navigate to 'Agents'.
