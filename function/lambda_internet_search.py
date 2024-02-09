@@ -16,32 +16,37 @@ def get_page_content(url):
         return None
 
 def empty_tmp_directory():
-    folder = '/tmp'
-    for filename in os.listdir(folder):
-        file_path = os.path.join(folder, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
+    try:
+        folder = '/tmp'
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f"Failed to delete {file_path}. Reason: {e}")
+        print("Temporary directory emptied.")
+    except Exception as e:
+        print(f"Error while emptying /tmp directory: {e}")
 
 def save_content_to_tmp(content, filename):
     try:
         if content is not None:
             with open(f'/tmp/{filename}', 'w', encoding='utf-8') as file:
                 file.write(content)
+            print(f"Saved {filename} to /tmp")
             return f"Saved {filename} to /tmp"
         else:
             raise Exception("No content to save.")
     except Exception as e:
         print(f"Error while saving {filename} to /tmp: {e}")
 
-def search_google(query, num_results=5):
+def search_google(query):
     try:
         search_results = []
-        for j in search(query, num=5, stop=num_results, pause=10):
+        for j in search(query, sleep_interval=5, num_results=10):
             search_results.append(j)
         return search_results
     except Exception as e:
@@ -52,9 +57,11 @@ def handle_search(event):
     input_text = event.get('inputText', '')  # Extract 'inputText'
 
     # Empty the /tmp directory before saving new files
+    print("Emptying temporary directory...")
     empty_tmp_directory()
 
     # Proceed with Google search
+    print("Performing Google search...")
     urls_to_scrape = search_google(input_text)
 
     aggregated_content = ""
@@ -72,6 +79,7 @@ def handle_search(event):
     # Define a single filename for the aggregated content
     aggregated_filename = f"aggregated_{input_text.replace(' ', '_')}.txt"
     # Save the aggregated content to /tmp
+    print("Saving aggregated content to /tmp...")
     save_result = save_content_to_tmp(aggregated_content, aggregated_filename)
     if save_result:
         results.append({'aggregated_file': aggregated_filename, 'tmp_save_result': save_result})
