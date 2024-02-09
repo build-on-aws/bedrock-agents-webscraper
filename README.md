@@ -159,7 +159,7 @@ Then, select Next.
 - Example prompts for webscrape action group:
    1. Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu"
    2. Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku"
-   3. Webscrape this url, and tell me about Romeo "https://en.wikipedia.org/wiki/Romeo_%2B_Juliet"
+   3. Webscrape this url and tell me what you know about Romeo "https://www.gutenberg.org/cache/epub/1777/pg1777-images.html"
 
 
 ![Agent test 2](images/agent_test_2.png)
@@ -172,7 +172,7 @@ Then, select Next.
 
 ![Agent test 3](images/agent_test_3.png)
 
-- **PLEASE NOTE:** when using the webscraper and internet-search     functionality, you could experience some level of hallucincation, innacuracies, or error if you attempt to ask about information that is very recent, if the url does not contain a valid TLD (top-level-domain) like for example .com, if the prompt is too vague, or if the endpoint cannot be accessed or has a redirect. 
+- **PLEASE NOTE:** when using the webscraper and internet-search     functionality, you could experience some level of hallucincation, innacuracies, or error if you attempt to ask about information that is very recent, if the prompt is too vague, or if the endpoint cannot be accessed or has a redirect. 
 
    There is also minimal control over which urls are selected during the internet search, except for the # of urls selected from within the google search function parameters. In order to help control this behavior, more engineering will need to be involved. 
 
