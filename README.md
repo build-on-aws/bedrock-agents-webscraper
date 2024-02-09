@@ -174,7 +174,7 @@ After, scroll down and select Save & Exit.
 
 ![Agent test 3](images/agent_test_3.png)
 
-- **PLEASE NOTE** when using the webscraper and internet-search functionality, you could experience some level of hallucincation or error if you attempt to ask about information that is very recent, the url does not contain a valid TLD (top-level-domain) like for example .com, if the prompt is too vague, or if the endpoint has a redirect or cannot be accessed. In order to control this behavior, more prompt engineering and development will need to be involved. 
+- **PLEASE NOTE** when using the webscraper and internet-search functionality, you could experience some level of hallucincation, innacuracies, or error if you attempt to ask about information that is very recent, if the url does not contain a valid TLD (top-level-domain) like for example .com, if the prompt is too vague, or if the endpoint cannot be accessed or has a redirect. In order to control this behavior, more prompt engineering and development will need to be involved. 
 
 ## Cleanup
 After completing the setup and testing of the Bedrock Agent and Streamlit app, follow these steps to clean up your AWS environment and avoid unnecessary charges:
