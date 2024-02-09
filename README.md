@@ -167,7 +167,7 @@ After, scroll down and select Save & Exit.
 
 - Example prompts for internet search action group:
    1. Do an internet search and tell me the top 3 best traits about lebron james
-   2. Do an internet search and tell me how do i know when foods are healthy for me
+   2. Do an internet search and tell me how do I know when foods are healthy for me
    3. Do an internet search and tell me the top 3 strongest features of charizard from pokemon
 
 ![Agent test 3](images/agent_test_3.png)
