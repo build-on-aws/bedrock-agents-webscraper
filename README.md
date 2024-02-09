@@ -1,5 +1,5 @@
 
-# Setup Amazon Bedrock Agent for Internet Search & Webscrape
+# Setup Amazon Bedrock Agent for Webscrape & Internet Search
 
 ## Introduction
  We will setup an Amazon Bedrock agent with an action group. This Bedrock agent will have the ability to webscrape a specific URL provided from the user prompt. You can also request the agent to do an internet searh on something specific, without providing a URL. 
