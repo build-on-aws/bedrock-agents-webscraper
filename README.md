@@ -161,7 +161,7 @@ Then, select Next.
 - Example prompts for webscrape action group:
    1. Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu"
    2. Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku"
-   3. Webscrape this url, and tell me about Romeo "https://en.wikipedia.org/wiki/Romeo_%2B_Juliet"
+   3. Webscrape this url and tell me about Romeo "https://en.wikipedia.org/wiki/Romeo_%2B_Juliet"
 
 
 ![Agent test 2](images/agent_test_2.png)
