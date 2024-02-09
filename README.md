@@ -158,7 +158,7 @@ After, scroll down and select Save & Exit.
 
 - Example prompts for webscrape action group:
    1. Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu"
-   2. Webscrape this url and tell me the main villians that Goku had to protect on planet earth "https://en.wikipedia.org/wiki/Goku"
+   2. Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku"
    3. Webscrape this url that is a book, and summarize it "https://en.wikipedia.org/wiki/Romeo_%2B_Juliet"
 
 ![Agent test 2](images/agent_test_2.png)
@@ -171,7 +171,7 @@ After, scroll down and select Save & Exit.
 
 ![Agent test 3](images/agent_test_3.png)
 
-- **PLEASE NOTE** when using the internet-search functionality, you could experience some level of hallucincation or error if you attempt to ask about information that is very recent, url does not contain a valid TLD (top-level-domain), or if the endpoint has a redirect or cannot be accessed. In order to control this behavior, more prompt engineering will need to be involved. 
+- **PLEASE NOTE** when using the internet-search functionality, you could experience some level of hallucincation or error if you attempt to ask about information that is very recent, url does not contain a valid TLD (top-level-domain), if the prompt is too vague, or if the endpoint has a redirect or cannot be accessed. In order to control this behavior, more prompt engineering will need to be involved. 
 
 ## Cleanup
 After completing the setup and testing of the Bedrock Agent and Streamlit app, follow these steps to clean up your AWS environment and avoid unnecessary charges:
