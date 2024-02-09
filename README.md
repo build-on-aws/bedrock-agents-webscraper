@@ -112,7 +112,7 @@
 
 - Select the Anthropic: Claude V2.1 model. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. 
 
-   "You are a research analyst that webscrapes websites, and searches the internet to provide information based on a <user-request>. You provide short, concise answers in a friendly manner." 
+   "You are a research analyst that webscrapes websites, and searches the internet to provide information based on a `<user-request>`. You provide short, concise answers in a friendly manner." 
 
 Then, select Next.
 
