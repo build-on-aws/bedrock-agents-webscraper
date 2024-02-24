@@ -7,7 +7,7 @@
 ## Prerequisites
 - An active AWS Account.
 - Familiarity with AWS services like Amazon Bedrock, S3, and Lambda.
-- Make sure that you have granted access to all Amazon models, and Anthropic Claude model from the Amazon Bedrock console.
+- Access will need to be granted to the **Titan Embeddings G1 - Text** Amazon model, and **Anthropic Claude Instant** model from the Amazon Bedrock console.
 
 ## Library dependencies
 - [requests](https://pypi.org/project/requests/)
