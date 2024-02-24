@@ -37,10 +37,9 @@ curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/ma
 ```
 
 
-- The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Once downloaded, upload these files to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`. Make sure to open the .json documents to review the content.
+- The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Make sure to open the .json documents to review the content.
 
-
-- Next, download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip), then upload to to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`.
+- Next, download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip), Once all of these files are downloaded, upload them to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`.
 
 ![Loaded Artifact](images/loaded_artifact.png)
 
