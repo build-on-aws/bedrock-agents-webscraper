@@ -207,7 +207,128 @@ def lambda_handler(event, context):
 ![Lambda config 2](images/lambda_config_2.png)
 
 
-- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the internet-search, using the ["lambda_internet_search.py"](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_internet_search.py) code. Name this Lambda function **bedrock-agent-internet-search**
+- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the **internet-search**. Name this Lambda function **bedrock-agent-internet-search**. Copy/paste the python code below for this Lambda, the **Deploy** the function after changes:
+
+```python
+import json
+import requests
+import os
+import shutil
+from googlesearch import search
+
+def get_page_content(url):
+    try:
+        response = requests.get(url)
+        if response:
+            return response.text
+        else:
+            raise Exception("No response from the server.")
+    except Exception as e:
+        print(f"Error while fetching content from {url}: {e}")
+        return None
+
+def empty_tmp_directory():
+    try:
+        folder = '/tmp'
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f"Failed to delete {file_path}. Reason: {e}")
+        print("Temporary directory emptied.")
+    except Exception as e:
+        print(f"Error while emptying /tmp directory: {e}")
+
+def save_content_to_tmp(content, filename):
+    try:
+        if content is not None:
+            with open(f'/tmp/{filename}', 'w', encoding='utf-8') as file:
+                file.write(content)
+            print(f"Saved {filename} to /tmp")
+            return f"Saved {filename} to /tmp"
+        else:
+            raise Exception("No content to save.")
+    except Exception as e:
+        print(f"Error while saving {filename} to /tmp: {e}")
+
+def search_google(query):
+    try:
+        search_results = []
+        for j in search(query, sleep_interval=5, num_results=10):
+            search_results.append(j)
+        return search_results
+    except Exception as e:
+        print(f"Error during Google search: {e}")
+        return []
+
+def handle_search(event):
+    input_text = event.get('inputText', '')  # Extract 'inputText'
+
+    # Empty the /tmp directory before saving new files
+    print("Emptying temporary directory...")
+    empty_tmp_directory()
+
+    # Proceed with Google search
+    print("Performing Google search...")
+    urls_to_scrape = search_google(input_text)
+
+    aggregated_content = ""
+    results = []
+    for url in urls_to_scrape:
+        print("URLs Used: ", url)
+        content = get_page_content(url)
+        if content:
+            filename = url.split('//')[-1].replace('/', '_') + '.txt'  # Simple filename from URL
+            aggregated_content += f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
+            results.append({'url': url, 'status': 'Content aggregated'})
+        else:
+            results.append({'url': url, 'error': 'Failed to fetch content'})
+
+    # Define a single filename for the aggregated content
+    aggregated_filename = f"aggregated_{input_text.replace(' ', '_')}.txt"
+    # Save the aggregated content to /tmp
+    print("Saving aggregated content to /tmp...")
+    save_result = save_content_to_tmp(aggregated_content, aggregated_filename)
+    if save_result:
+        results.append({'aggregated_file': aggregated_filename, 'tmp_save_result': save_result})
+    else:
+        results.append({'aggregated_file': aggregated_filename, 'error': 'Failed to save aggregated content to /tmp'})
+
+    return {"results": results}
+
+def lambda_handler(event, context):
+    print("THE EVENT: ", event)
+    
+    response_code = 200
+    if event.get('apiPath') == '/search':
+        result = handle_search(event)
+    else:
+        response_code = 404
+        result = {"error": "Unrecognized api path"}
+
+    response_body = {
+        'application/json': {
+            'body': json.dumps(result)
+        }
+    }
+
+    action_response = {
+        'actionGroup': event['actionGroup'], 
+        'apiPath': event['apiPath'],
+        'httpMethod': event['httpMethod'],
+        'httpStatusCode': response_code,
+        'responseBody': response_body
+    }
+
+    api_response = {'messageVersion': '1.0', 'response': action_response}
+    print("RESPONSE: ", action_response)
+    
+    return api_response
+'''
 
 
 ### Step 3: Create & attach Lambda layer
@@ -238,25 +359,27 @@ def lambda_handler(event, context):
 
 ![Orchestration2](images/orchestration2.png)
 
-- On the next screen, provide an agent name, like WebscrapeAgent. Leave the other options as default, then select **Next**.
+- On the next screen, provide an agent name, like "WebscrapeAgent". Leave the other options as default, then select **Next**.
 
 ![Agent details](images/agent_details.png)
 
 ![Agent details 2](images/agent_details_2.png)
 
-- Select the **Anthropic: Claude V2.1 model**. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. 
+- Select the **Anthropic: Claude Instant V1 model**. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. 
 
-   "You are a research analyst that webscrapes websites, and searches the internet to provide information based on a `<user-request>`. You provide short, concise answers in a friendly manner." 
+   ```text
+  You are a research analyst that webscrapes websites, and searches the internet to provide information based on a `<question>`. You provide short, concise answers in a friendly manner.
+   ```
 
 Then, select Next.
 
 ![Model select2](images/select_model.png)
 
-- Provide an action group name like "webscrape". Select the Lambda function "bedrock-agent-webscrape". For the S3 Url, select the schema webscrape-schema.json file in the S3 bucket "artifacts-bedrock-agent-webscrape-alias".
+- Provide an action group name like "webscrape". Select the Lambda function `bedrock-agent-webscrape`. For the S3 Url, select the `schema webscrape-schema.json` file in the S3 bucket `artifacts-bedrock-agent-webscrape-alias`.
 
 ![Add action group](images/action_group_add.png)
 
-- After, select Next, then Next again as we are not adding a knowledge base. On the last screen, select Create Agent.
+- After, select **Next**, then **Next** again as we are not adding a knowledge base. On the last screen, select **Create Agent**.
 
 - You are now done setting up the webscrape action group. You will need to create another action group following the exact same process for the internet-search, using the schema [internet-search-schema.json](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/schema/internet-search-schema.json) file.
 
