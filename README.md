@@ -52,11 +52,11 @@ curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/ma
 ![Create Function2](images/create_function_2.png)
 
  
-- Copy the provided code from [here]((https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_webscrape.py), or from below into the Lambda function.
+- Copy the provided code from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_webscrape.py), or from below into the Lambda function.
 
 
 ```python
-]import requests
+import requests
 import os
 
 # Fetch URL and extract text
@@ -393,39 +393,50 @@ Then, select Next.
 
 ![bedrock agent screen 2](images/bedrock_agent_screen_2.png)
 
-- Your tab should already be on "Pre-processing". Toggle on the "Override pre-processing template defaults" radio button. Also make sure the "Activate pre-processing template" radio button is on like below.
-
-![bedrock agent screen 3](images/bedrock_agent_screen_3.png)
+- Your tab should already be on **Pre-processing**. Toggle on the **Override pre-processing template defaults** radio button. Also make sure the **Activate pre-processing template** radio button is on like below.
 
 - Under *prompt template editor*, you will notice that you now have access to control the pre-built prompts. Scroll down to until you see "Category D". Replace this category section with the following:
 
-   `-Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function.`
+   ```text
+  -Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function.
+   ```
 
-   After, scroll down and select Save & Exit.
+- After, scroll down and select Save & Exit.
 
-![bedrock agent screen 4](images/bedrock_agent_screen_4.png)
+![bedrock agent screen 4](images/bedrock_agent_screen_4.gif)
 
 
 ## Step 5: Testing the Setup
 
 ### Testing the Bedrock Agent
-- While in the Bedrock console, select “Agents” under the Orchestration tab, following the agent you created. You should be able to enter prompts in the user interface provided to test your action groups from the Bedrock agent.
+- While in the Bedrock console, select **Agents** under the **Orchestration** tab, following the agent you created. You should be able to enter prompts in the user interface provided to test your action groups from the Bedrock agent.
 
 ![Agent test](images/agent_test.png)
 
 - Example prompts for webscrape action group:
-   1. Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu"
-   2. Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku"
-   3. Webscrape this url and tell me what you know about Romeo "https://www.gutenberg.org/cache/epub/1777/pg1777-images.html"
-
+  ```
+   Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu" 
+  ```
+  ```
+  Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku"
+  ```
+  ```
+  Webscrape this url and tell me what you know about Romeo "https://www.gutenberg.org/cache/epub/1777/pg1777-images.html"
+  ```
 
 ![Agent test 2](images/agent_test_2.png)
 
 
 - Example prompts for internet search action group:
-   1. Do an internet search and tell me the top 3 best traits about lebron james
-   2. Do an internet search and tell me how do I know what foods are healthy for me
-   3. Do an internet search and tell me the top 3 strongest features of charizard from pokemon
+ ```
+   Do an internet search and tell me the top 3 best traits about lebron james
+ ```
+ ```   
+   Do an internet search and tell me how do I know what foods are healthy for me
+ ```
+ ```
+   Do an internet search and tell me the top 3 strongest features of charizard from pokemon
+ ```   
 
 ![Agent test 3](images/agent_test_3.png)
 
@@ -434,7 +445,7 @@ Then, select Next.
 ![Lambda logs](images/lambda_logs.png)
 
 
-- **PLEASE NOTE:** when using the webscraper and internet-search     functionality, you could experience some level of hallucincation, innacuracies, or error if you attempt to ask about information that is very recent, if the prompt is too vague, or if the endpoint cannot be accessed or has a redirect. 
+- **PLEASE NOTE:** when using the **webscraper** and **internet-search** functionality, you could experience some level of hallucincation, innacuracies, or error if you attempt to ask about information that is very recent, if the prompt is too vague, or if the endpoint cannot be accessed or has a redirect. 
 
    There is also minimal control over which urls are selected during the internet search, except for the # of urls selected from within the google search function parameters. In order to help control this behavior, more engineering will need to be involved. 
 
