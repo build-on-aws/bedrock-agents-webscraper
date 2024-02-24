@@ -366,9 +366,8 @@ def lambda_handler(event, context):
 
 - On the next screen, provide an agent name, like "WebscrapeAgent". Leave the other options as default, then select **Next**.
 
-![Agent details](images/agent_details.png)
+![Agent details](images/agent_details.gif)
 
-![Agent details 2](images/agent_details_2.png)
 
 - Select the **Anthropic: Claude Instant V1 model**. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. 
 
