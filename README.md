@@ -331,7 +331,7 @@ def lambda_handler(event, context):
     print("RESPONSE: ", action_response)
     
     return api_response
-'''
+```
 
 
 ### Step 3: Create & attach Lambda layer
