@@ -181,7 +181,7 @@ def lambda_handler(event, context):
 ```
 
 
-   This code takes the url from the event passed in from the bedrock agent, then uses the requests library to call, then scrape the webpage. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code before moving to the next step.
+   This above code takes the url from the event passed in from the bedrock agent, then uses the **requests** library to call, then scrape the webpage. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code before moving to the next step.
 
 
 ![Lambda deploy](images/lambda_deploy.png)
@@ -193,7 +193,9 @@ def lambda_handler(event, context):
 
 ![Lambda resource policy create](images/lambda_resource_policy_create.png)
 
+
 - Here is an example of the resource policy. (At this part of the setup, we will not have a Bedrock agent Source ARN. So, enter in `arn:aws:bedrock:us-west-2:{accoundID}:agent/BedrockAgentID` for now. We will include the ARN once it’s generated in step 4 after creating the Bedrock agent)
+
 
 ![Lambda resource policy](images/lambda_resource_policy.png)
 
@@ -201,6 +203,7 @@ def lambda_handler(event, context):
 - Next, we will adjust the configuration on the Lambda so that it has enough time, and CPU to handle the request. Navigate back to the Lambda function screen, go to the Configurations tab, then General configuration and select Edit.
 
 ![Lambda config 1](images/lambda_config_1.png)
+
 
 - Update Memory to 4048MB, Ephemeral storage to 1024MB, and Timeout to 1 minute. Leave the other settings as default, then select Save.
 
@@ -346,6 +349,7 @@ def lambda_handler(event, context):
 ![lambda layer 3](images/lambda_layer_3.png)
 
 ![lambda layer 4](images/lambda_layer_4.png)
+
 
 - Choose the Custom layers option from the drop down, select the layer you created **googlesearch_requests_layer**, and version 1. Then, select Add. Navigate back to your Lambda function, and verify that the layer has been added.
 
