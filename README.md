@@ -401,7 +401,7 @@ Then, select Next.
   -Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function.
    ```
 
-- After, scroll down and select Save & Exit.
+- After, scroll down and select **Save & Exit**.
 
 ![bedrock agent screen 4](images/bedrock_agent_screen_4.gif)
 
@@ -413,7 +413,7 @@ Then, select Next.
 
 ![Agent test](images/agent_test.png)
 
-- Example prompts for webscrape action group:
+- Example prompts for **webscrape** action group:
   ```
    Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu" 
   ```
@@ -427,7 +427,7 @@ Then, select Next.
 ![Agent test 2](images/agent_test_2.png)
 
 
-- Example prompts for internet search action group:
+- Example prompts for **internet search** action group:
  ```
    Do an internet search and tell me the top 3 best traits about lebron james
  ```
