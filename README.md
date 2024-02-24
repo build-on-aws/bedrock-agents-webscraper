@@ -410,9 +410,10 @@ def lambda_handler(event, context):
 ## Step 5: Testing the Setup
 
 ### Testing the Bedrock Agent
-- While in the Bedrock console, select **Agents** under the **Orchestration** tab, following the agent you created. You should be able to enter prompts in the user interface provided to test your action groups from the Bedrock agent.
+- While on the Bedrock console, select **Agents** under the **Orchestration** tab, then the agent you created. Make sure to **Prepare** the agent so that the changes made can update. You will be able to enter prompts in the user interface to test your Bedrock agent action groups.
 
 ![Agent test](images/agent_test.png)
+
 
 - Example prompts for **webscrape** action group:
   ```
