@@ -181,7 +181,7 @@ def lambda_handler(event, context):
 ```
 
 
-   This above code takes the url from the event passed in from the bedrock agent, then uses the **requests** library to call, then scrape the webpage. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code before moving to the next step.
+- This above code takes the url from the event passed in from the bedrock agent, then uses the **requests** library to call, then scrape the webpage. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code, then **Deploy** the Lambda before moving to the next step.
 
 
 ![Lambda deploy](images/lambda_deploy.png)
