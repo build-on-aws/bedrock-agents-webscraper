@@ -346,14 +346,11 @@ def lambda_handler(event, context):
 
 - Navigate back to Lambda function `bedrock-agent-webscrape`, with **Code** tab selected. Scroll to the Layers section and select **Add a Layer**
 
-![lambda layer 3](images/lambda_layer_3.png)
-
-![lambda layer 4](images/lambda_layer_4.png)
+- Choose the **Custom layers** option from the radio buttons, select the layer you created **googlesearch_requests_layer**, and version 1, then **Add**. Navigate back to your Lambda function, and verify that the layer has been added.
 
 
-- Choose the Custom layers option from the drop down, select the layer you created **googlesearch_requests_layer**, and version 1. Then, select Add. Navigate back to your Lambda function, and verify that the layer has been added.
+![lambda layer 3](images/lambda_layer_3.gif)
 
-![lambda layer 5](images/lambda_layer_5.png)
 
 - You are now done creating and adding the dependencies needed via Lambda layer for your webscrape function. Now, add this same layer to the Lambda function `bedrock-agent-internet-search`, and verify that it has been added successfully.
 
