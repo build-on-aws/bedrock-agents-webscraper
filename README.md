@@ -23,43 +23,177 @@
 
 ### Step 1: Creating S3 Bucket
 
-- **Artifacts & Lambda layer Bucket**: Create an S3 bucket to store artifacts. For example, call it "artifacts-bedrock-agent-webscrape-alias". You will need to download, then add the API schema files to this S3 bucket. These .json files can be found [here](https://github.com/build-on-aws/bedrock-agents-webscraper/tree/main/schema). 
-
-   The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Once uploaded, please select and open the .json documents to review the content.
-
-   You will also need to download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip). 
-
-![Bucket create 1](images/bucket_pic_1.png)
+- **Artifacts & Lambda layer Bucket**: Create an S3 bucket to store artifacts. For example, call it `artifacts-bedrock-agent-webscrape-{alias}`. You will need to download, then add the API schema files to this S3 bucket. Open up a command prompt, and run the following curl commands to download and save these files to the **Downloads** folder:
 
 
-![Bucket create 2](images/bucket_pic_2.png)
+```bash
+curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/internet-search-schema.json --output ~/Downloads/internet-search-schema.json
 
+curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/webscrape-schema.json --output ~/Downloads/webscrape-schema.json
+```
+
+
+- The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Once downloaded, upload these files to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`. Make sure to open the .json documents to review the content.
+   
+
+![Bucket create 1](images/bucket_setup.gif)
+
+
+- Next, download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip), then upload to to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`.
 
 ![Loaded Artifact](images/loaded_artifact.png)
 
 
 ### Step 2: Lambda Function Configuration
-- Create a Lambda function (Python 3.12) for the Bedrock agent's action group. We will call this Lambda function "bedrock-agent-webscrape". 
+- Create a Lambda function (Python 3.12) for the Bedrock agent's action group. We will call this Lambda function `bedrock-agent-webscrape`. 
 
 ![Create Function](images/create_function.png)
 
 ![Create Function2](images/create_function_2.png)
 
-- Copy the provided code from the ["lambda_webscrape.py"](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_webscrape.py) file into your Lambda function. After, select the deploy button in the tab section in the Lambda console. 
+ 
+- Copy the provided code from [here]((https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_webscrape.py), or from below into the Lambda function.
 
-   This code takes the url from the event passed in from the bedrock agent, then uses the requests library to call, then scrape the webpage. The scraped data is saved to the /tmp directory of the Lambda function, then passed into the response back to the agent.
 
-   Review the code provided before moving to the next step. (Make sure that the IAM role associated with the Bedrock agent can invoke the Lambda function)
+```python
+]import requests
+import os
+
+# Fetch URL and extract text
+def get_page_content(url):
+    try:
+        response = requests.get(url)
+        if response.history:  # Check if there were any redirects
+            print(f"Redirect detected for {url}")
+            return None  # Return None to indicate a redirect occurred
+        elif response:
+            return response.text
+        else:
+            raise Exception("No response from the server.")
+    except Exception as e:
+        print(f"Error while fetching content from {url}: {e}")
+        return None
+
+def empty_tmp_folder():
+    try:
+        for filename in os.listdir('/tmp'):
+            file_path = os.path.join('/tmp', filename)
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        return "Temporary folder emptied."
+    except Exception as e:
+        print(f"Error while emptying /tmp folder: {e}")
+        return None
+
+def save_to_tmp(filename, content):
+    try:
+        if content is not None:
+            with open(f'/tmp/{filename}', 'w') as file:
+                file.write(content)
+            return f"Saved {filename} to /tmp"
+        else:
+            raise Exception("No content to save.")
+    except Exception as e:
+        print(f"Error while saving {filename} to /tmp: {e}")
+        return None
+
+def check_tmp_for_data(query):
+    try:
+        data = []
+        for filename in os.listdir('/tmp'):
+            if query in filename:
+                with open(f'/tmp/{filename}', 'r') as file:
+                    data.append(file.read())
+        return data if data else None
+    except Exception as e:
+        print(f"Error while checking /tmp for query {query}: {e}")
+        return None
+
+# Modify handle_search function to use tmp folder instead of S3
+def handle_search(event):
+    # Extract 'inputURL' from parameters
+    parameters = event.get('parameters', [])
+    input_url = next((param['value'] for param in parameters if param['name'] == 'inputURL'), '')
+
+    if not input_url:
+        return {"error": "No URL provided"}
+
+    # Ensure URL starts with http:// or https://
+    if not input_url.startswith(('http://', 'https://')):
+        input_url = 'http://' + input_url
+
+    # Check /tmp directory first
+    tmp_data = check_tmp_for_data(input_url)
+    if tmp_data:
+        return {"results": tmp_data}
+
+    # Empty the /tmp directory before saving new files
+    empty_tmp_result = empty_tmp_folder()
+    if empty_tmp_result is None:
+        return {"error": "Failed to empty /tmp folder"}
+
+    # Scrape content from the provided URL
+    content = get_page_content(input_url)
+    if content is None:
+        return {"error": "Failed to retrieve content"}
+
+    filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
+    save_result = save_to_tmp(filename, content)
+    if save_result is None:
+        return {"error": "Failed to save to /tmp"}
+
+    return {"results": {'url': input_url, 'tmp_save_result': save_result}}
+
+# Modify lambda_handler accordingly
+def lambda_handler(event, context):
+    response_code = 200
+    action_group = event['actionGroup']
+    api_path = event['apiPath']
+
+    print("THE EVENT: ", event)
+    
+    if api_path == '/search':
+        result = handle_search(event)
+    else:
+        response_code = 404
+        result = f"Unrecognized api path: {action_group}::{api_path}"
+
+    response_body = {
+        'application/json': {
+            'body': result
+        }
+    }
+
+    action_response = {
+        'actionGroup': event['actionGroup'], 
+        'apiPath': event['apiPath'],
+        'httpMethod': event['httpMethod'],
+        'httpStatusCode': response_code,
+        'responseBody': response_body
+    }
+
+    api_response = {'messageVersion': '1.0', 'response': action_response}
+    print("RESPONSE: ", action_response)
+    
+    return api_response
+```
+
+
+   This code takes the url from the event passed in from the bedrock agent, then uses the requests library to call, then scrape the webpage. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code before moving to the next step.
+
 
 ![Lambda deploy](images/lambda_deploy.png)
 
-- Next, apply a resource policy to the Lambda to grant Bedrock agent access. To do this, we will switch the top tab from “code” to “configuration” and the side tab to “Permissions”. Then, scroll to the “Resource-based policy statements” section and click the “Add permissions” button.
+
+- Next, apply a resource policy to the Lambda to grant Bedrock agent access. To do this, we will switch the top tab from **code** to **configuration** and the side tab to **Permissions**. Then, scroll to the **Resource-based policy statements** section and click the **Add permissions** button.
 
 ![Permissions config](images/permissions_config.png)
 
 ![Lambda resource policy create](images/lambda_resource_policy_create.png)
 
-- Here is an example of the resource policy. (At this part of the setup, we will not have a Bedrock agent Source ARN. So, enter in "arn:aws:bedrock:us-west-2:{accoundID}:agent/BedrockAgentID" for now. We will include the ARN once it’s generated in step 4 after creating the Bedrock agent)
+- Here is an example of the resource policy. (At this part of the setup, we will not have a Bedrock agent Source ARN. So, enter in `arn:aws:bedrock:us-west-2:{accoundID}:agent/BedrockAgentID` for now. We will include the ARN once it’s generated in step 4 after creating the Bedrock agent)
 
 ![Lambda resource policy](images/lambda_resource_policy.png)
 
@@ -73,44 +207,44 @@
 ![Lambda config 2](images/lambda_config_2.png)
 
 
-- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the internet-search, using the ["lambda_internet_search.py"](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_internet_search.py) code. Name this Lambda function "bedrock-agent-internet-search"
+- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the internet-search, using the ["lambda_internet_search.py"](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/function/lambda_internet_search.py) code. Name this Lambda function **bedrock-agent-internet-search**
 
 
 ### Step 3: Create & attach Lambda layer
 
-- In order to create this Lambda layer, you will need a .zip file of the dependencies needed for the Lambda function that are not natively provided. In this case, we are using the requests and googlesearrch libraries for the internet searching and web scraping. I've already packaged the dependencies that you can download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip).  
+- In order to create this Lambda layer, you will need a .zip file of the dependencies needed for the Lambda function that are not natively provided. In this case, we are using the **requests** and **googlesearrch** libraries for internet searching and web scraping. The dependencies are already packaged, and can be download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip).  
 
-- After, navigate to the AWS Lambda console, then select layers from the left-side panel, then create layer.
+- After, navigate to the AWS Lambda console, then select **layers** from the left-side panel, then create layer.
   ![lambda layer 1](images/lambda_layer_1.png)
 
-- Name your lambda layer "googlesearch_requests_layer". Select "Upload a .zip file" and choose the .zip file of dependencies. Choose "x86_64" for your Compatible architectures, and Python 3.12 for your runtime (3.11 version is optional). Your choices should look similar to the example below. 
+- Name your lambda layer `googlesearch_requests_layer`. Select **Upload a .zip file** and choose the .zip file of dependencies. Choose **x86_64** for your Compatible architectures, and Python 3.12 for your runtime (3.11 version is optional). Your choices should look similar to the example below. 
 ![lambda layer 2](images/lambda_layer_2.png)
 
-- Navigate back to Lambda function "bedrock-agent-webscrape", with Code tab selected. Scroll to the Layers section and select "Add a Layer"
+- Navigate back to Lambda function `bedrock-agent-webscrape`, with **Code** tab selected. Scroll to the Layers section and select **Add a Layer**
 
 ![lambda layer 3](images/lambda_layer_3.png)
 
 ![lambda layer 4](images/lambda_layer_4.png)
 
-- Choose the Custom layers option from the drop down, select the layer you created "googlesearch_requests_layer", and version 1. Then, select Add. Navigate back to your Lambda function, and verify that the layer has been added.
+- Choose the Custom layers option from the drop down, select the layer you created **googlesearch_requests_layer**, and version 1. Then, select Add. Navigate back to your Lambda function, and verify that the layer has been added.
 
 ![lambda layer 5](images/lambda_layer_5.png)
 
-- You are now done creating and adding the dependencies needed via Lambda layer for your webscrape function. Now, add this same layer to the Lambda function "bedrock-agent-internet-search", and verify that it has been added successfully.
+- You are now done creating and adding the dependencies needed via Lambda layer for your webscrape function. Now, add this same layer to the Lambda function `bedrock-agent-internet-search`, and verify that it has been added successfully.
 
 
 ### Step 4: Setup Bedrock Agent and Action Group 
-- Navigate to the Bedrock console, go to the toggle on the left, and under “Orchestration” select Agents, then select “Create Agent”.
+- Navigate to the Bedrock console, go to the toggle on the left, and under **Orchestration** select **Agents**, then select **Create Agent**.
 
 ![Orchestration2](images/orchestration2.png)
 
-- On the next screen, provide an agent name, like WebscrapeAgent. Leave the other options as default, then select “Next”
+- On the next screen, provide an agent name, like WebscrapeAgent. Leave the other options as default, then select **Next**.
 
 ![Agent details](images/agent_details.png)
 
 ![Agent details 2](images/agent_details_2.png)
 
-- Select the Anthropic: Claude V2.1 model. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. 
+- Select the **Anthropic: Claude V2.1 model**. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. 
 
    "You are a research analyst that webscrapes websites, and searches the internet to provide information based on a `<user-request>`. You provide short, concise answers in a friendly manner." 
 
