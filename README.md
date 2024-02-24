@@ -23,8 +23,12 @@
 
 ### Step 1: Creating S3 Bucket
 
-- **Artifacts & Lambda layer Bucket**: Create an S3 bucket to store artifacts. For example, call it `artifacts-bedrock-agent-webscrape-{alias}`. You will need to download, then add the API schema files to this S3 bucket. Open up a command prompt, and run the following curl commands to download and save these files to the **Downloads** folder:
+- **Artifacts & Lambda layer Bucket**: Create an S3 bucket to store artifacts. For example, call it `artifacts-bedrock-agent-webscrape-{alias}`.
+  
+![Bucket create 1](images/bucket_setup.gif)
 
+
+Next, download and add the API schema files to this S3 bucket. To do that, open a command prompt, and run these `curl` commands to download these files to your **Downloads** folder:
 
 ```bash
 curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/internet-search-schema.json --output ~/Downloads/internet-search-schema.json
@@ -34,9 +38,6 @@ curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/ma
 
 
 - The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Once downloaded, upload these files to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`. Make sure to open the .json documents to review the content.
-   
-
-![Bucket create 1](images/bucket_setup.gif)
 
 
 - Next, download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip), then upload to to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`.
