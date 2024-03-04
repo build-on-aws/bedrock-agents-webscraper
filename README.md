@@ -447,7 +447,7 @@ def lambda_handler(event, context):
 
 ![Agent test 3](images/agent_test_3.png)
 
-   (After executing the internet-search function, you can navigate to the CloudWatch logs for this Lambda, and observe the URLs that the data was scraped from, along with other details. You will notice that all URLs will not allow scraping, so the code is designed to error those attempts, and continue with the operation.)
+   (After executing the internet-search function, you can navigate to the CloudWatch logs for this Lambda function thats connected to the action group, and observe the URLs that the data was scraped from with details. You will notice that all URLs will not allow scraping, so the code is designed to error those attempts, and continue with the operation.)
 
 ![Lambda logs](images/lambda_logs.png)
 
