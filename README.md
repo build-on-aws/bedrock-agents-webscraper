@@ -343,7 +343,7 @@ def lambda_handler(event, context):
 
 ### Step 3: Create & attach Lambda layer
 
-- In order to create this Lambda layer, you will need a .zip file of the dependencies needed for the Lambda function that are not natively provided. In this case, we are using the **requests** and **googlesearrch** libraries for internet searching and web scraping. The dependencies are already packaged, and can be download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip).  
+- In order to create this Lambda layer, you will need a .zip file of dependencies for the Lambda function that are not natively provided. We are using the **requests** and **googlesearrch** libraries for internet searching and web scraping. The dependencies are already packaged, and can be download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip).  
 
 - After, navigate to the AWS Lambda console, then select **layers** from the left-side panel, then create layer.
   ![lambda layer 1](images/lambda_layer_1.png)
