@@ -28,7 +28,7 @@
 ![Bucket create 1](images/bucket_setup.gif)
 
 
-Next, download and add the API schema files to this S3 bucket. To do that, open a command prompt, and run these `curl` commands to download these files to your **Downloads** folder:
+Next, download and add the API schema files to this S3 bucket from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/tree/main/schema). To do that, open a command prompt, and run these `curl` commands to download these files to your **Downloads** folder:
 
 ```bash
 curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/internet-search-schema.json --output ~/Downloads/internet-search-schema.json
