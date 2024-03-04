@@ -28,14 +28,21 @@
 ![Bucket create 1](images/bucket_setup.gif)
 
 
-Next, download and add the API schema files to this S3 bucket from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/tree/main/schema). To do that, open a command prompt, and run these `curl` commands to download these files to your **Downloads** folder:
+Next, download and add the API schema files to this S3 bucket from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/tree/main/schema). To do that, open a command prompt, and run these `curl` commands to download these files to your **Documents** folder:
 
-```bash
+For **Mac**
+```linux
 curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/internet-search-schema.json --output ~/Downloads/internet-search-schema.json
 
 curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/webscrape-schema.json --output ~/Downloads/webscrape-schema.json
 ```
 
+For **Windows**
+```windows
+curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/internet-search-schema.json --output %USERPROFILE%\Downloads\internet-search-schema.json
+
+curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/webscrape-schema.json --output %USERPROFILE%\Downloads\webscrape-schema.json
+```
 
 - The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Make sure to open the .json documents to review the content.
 
