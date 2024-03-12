@@ -470,6 +470,12 @@ def lambda_handler(event, context):
   ```
   Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku"
   ```
+  ```
+  Webscrape this url and tell me about data modeling: https://schema.org/docs/datamodel.html
+  ```
+  ```
+  What is the exchange rate between US Dollars and MXN based on this website? "https://www.xoom.com/mexico/send-money"
+  ```
 
 ![Agent test 2](images/agent_test_2.png)
 
