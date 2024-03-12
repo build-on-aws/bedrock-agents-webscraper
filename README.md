@@ -46,7 +46,7 @@ curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/ma
 
 - The provided schemas are an OpenAPI specification for the "Webscrape & Internet Search APIs," which outlines the structure required to call the respective functions via input and/or url. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. These schemas define primary endpoints, `/search` detailing how to interact with the API, the required parameter, and the expected responses. Make sure to open the .json documents to review the content.
 
-- Next, download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/googlesearch_requests_libraries.zip), Once all of these files are downloaded, upload them to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`.
+- Next, download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/layer-python-requests-googlesearch-beatifulsoup.zip), Once all of these files are downloaded, upload them to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`.
 
 ![Loaded Artifact](images/loaded_artifact.png)
 
@@ -65,6 +65,8 @@ curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/ma
 ```python
 import requests
 import os
+import shutil
+from bs4 import BeautifulSoup
 
 # Fetch URL and extract text
 def get_page_content(url):
@@ -89,6 +91,7 @@ def empty_tmp_folder():
                 os.unlink(file_path)
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
+        print("Temporary folder emptied.")
         return "Temporary folder emptied."
     except Exception as e:
         print(f"Error while emptying /tmp folder: {e}")
@@ -97,8 +100,10 @@ def empty_tmp_folder():
 def save_to_tmp(filename, content):
     try:
         if content is not None:
+            print(content)
             with open(f'/tmp/{filename}', 'w') as file:
                 file.write(content)
+            print(f"Saved {filename} to /tmp")
             return f"Saved {filename} to /tmp"
         else:
             raise Exception("No content to save.")
@@ -113,6 +118,7 @@ def check_tmp_for_data(query):
             if query in filename:
                 with open(f'/tmp/{filename}', 'r') as file:
                     data.append(file.read())
+        print(f"Found {len(data)} file(s) in /tmp for query {query}")
         return data if data else None
     except Exception as e:
         print(f"Error while checking /tmp for query {query}: {e}")
@@ -145,15 +151,36 @@ def handle_search(event):
     content = get_page_content(input_url)
     if content is None:
         return {"error": "Failed to retrieve content"}
-
+    
+    # Parse and clean HTML content
+    cleaned_content = parse_html_content(content)
+    
     filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
-    save_result = save_to_tmp(filename, content)
+    save_result = save_to_tmp(filename, cleaned_content)
+    
     if save_result is None:
         return {"error": "Failed to save to /tmp"}
 
-    return {"results": {'url': input_url, 'tmp_save_result': save_result}}
+    return {"results": {'url': input_url, 'content': cleaned_content}}
 
-# Modify lambda_handler accordingly
+
+
+def parse_html_content(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    # Remove script and style elements
+    for script_or_style in soup(["script", "style"]):
+        script_or_style.decompose()
+    # Get text
+    text = soup.get_text()
+    # Break into lines and remove leading and trailing space on each
+    lines = (line.strip() for line in text.splitlines())
+    # Break multi-headlines into a line each
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    # Drop blank lines
+    cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+    return cleaned_text
+
+
 def lambda_handler(event, context):
     response_code = 200
     action_group = event['actionGroup']
@@ -182,13 +209,13 @@ def lambda_handler(event, context):
     }
 
     api_response = {'messageVersion': '1.0', 'response': action_response}
-    print("RESPONSE: ", action_response)
-    
+    print("action_response: ", action_response)
+    print("response_body: ", response_body)
     return api_response
 ```
 
 
-- This above code takes the url from the event passed in from the bedrock agent, then uses the **requests** library to call, then scrape the webpage. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code, then **Deploy** the Lambda before moving to the next step.
+- This above code takes the url from the event passed in from the bedrock agent, then uses the **requests** library to call, then scrape the webpage. The **beatifulsoup** library is used to clean up the scraped data. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code, then **Deploy** the Lambda before moving to the next step.
 
 
 ![Lambda deploy](images/lambda_deploy.png)
@@ -225,17 +252,32 @@ import requests
 import os
 import shutil
 from googlesearch import search
+from bs4 import BeautifulSoup
 
 def get_page_content(url):
     try:
         response = requests.get(url)
         if response:
-            return response.text
+            # Parse HTML content
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # Remove script and style elements
+            for script_or_style in soup(["script", "style"]):
+                script_or_style.decompose()
+            # Get text
+            text = soup.get_text()
+            # Break into lines and remove leading and trailing space on each
+            lines = (line.strip() for line in text.splitlines())
+            # Break multi-headlines into a line each
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            # Drop blank lines
+            cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+            return cleaned_text
         else:
             raise Exception("No response from the server.")
     except Exception as e:
-        print(f"Error while fetching content from {url}: {e}")
+        print(f"Error while fetching and cleaning content from {url}: {e}")
         return None
+
 
 def empty_tmp_directory():
     try:
@@ -292,6 +334,7 @@ def handle_search(event):
         print("URLs Used: ", url)
         content = get_page_content(url)
         if content:
+            print("CONTENT: ", content)
             filename = url.split('//')[-1].replace('/', '_') + '.txt'  # Simple filename from URL
             aggregated_content += f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
             results.append({'url': url, 'status': 'Content aggregated'})
