@@ -151,18 +151,17 @@ def handle_search(event):
     content = get_page_content(input_url)
     if content is None:
         return {"error": "Failed to retrieve content"}
-    
+
     # Parse and clean HTML content
     cleaned_content = parse_html_content(content)
-    
+
     filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
     save_result = save_to_tmp(filename, cleaned_content)
-    
+
     if save_result is None:
         return {"error": "Failed to save to /tmp"}
 
     return {"results": {'url': input_url, 'content': cleaned_content}}
-
 
 
 def parse_html_content(html_content):
@@ -187,7 +186,7 @@ def lambda_handler(event, context):
     api_path = event['apiPath']
 
     print("THE EVENT: ", event)
-    
+
     if api_path == '/search':
         result = handle_search(event)
     else:
@@ -201,7 +200,7 @@ def lambda_handler(event, context):
     }
 
     action_response = {
-        'actionGroup': event['actionGroup'], 
+        'actionGroup': event['actionGroup'],
         'apiPath': event['apiPath'],
         'httpMethod': event['httpMethod'],
         'httpStatusCode': response_code,
