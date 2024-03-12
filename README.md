@@ -470,9 +470,6 @@ def lambda_handler(event, context):
   ```
   Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku"
   ```
-  ```
-  Webscrape this url and tell me what you know about Romeo "https://www.gutenberg.org/cache/epub/1777/pg1777-images.html"
-  ```
 
 ![Agent test 2](images/agent_test_2.png)
 
