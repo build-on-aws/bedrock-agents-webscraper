@@ -3,17 +3,33 @@ import requests
 import os
 import shutil
 from googlesearch import search
+from bs4 import BeautifulSoup
+
 
 def get_page_content(url):
     try:
         response = requests.get(url)
         if response:
-            return response.text
+            # Parse HTML content
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # Remove script and style elements
+            for script_or_style in soup(["script", "style"]):
+                script_or_style.decompose()
+            # Get text
+            text = soup.get_text()
+            # Break into lines and remove leading and trailing space on each
+            lines = (line.strip() for line in text.splitlines())
+            # Break multi-headlines into a line each
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            # Drop blank lines
+            cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+            return cleaned_text
         else:
             raise Exception("No response from the server.")
     except Exception as e:
-        print(f"Error while fetching content from {url}: {e}")
+        print(f"Error while fetching and cleaning content from {url}: {e}")
         return None
+
 
 def empty_tmp_directory():
     try:
@@ -70,6 +86,7 @@ def handle_search(event):
         print("URLs Used: ", url)
         content = get_page_content(url)
         if content:
+            print("CONTENT: ", content)
             filename = url.split('//')[-1].replace('/', '_') + '.txt'  # Simple filename from URL
             aggregated_content += f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
             results.append({'url': url, 'status': 'Content aggregated'})
