@@ -1,5 +1,7 @@
-]import requests
+import requests
 import os
+import shutil
+from bs4 import BeautifulSoup
 
 # Fetch URL and extract text
 def get_page_content(url):
@@ -24,6 +26,7 @@ def empty_tmp_folder():
                 os.unlink(file_path)
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
+        print("Temporary folder emptied.")
         return "Temporary folder emptied."
     except Exception as e:
         print(f"Error while emptying /tmp folder: {e}")
@@ -32,8 +35,10 @@ def empty_tmp_folder():
 def save_to_tmp(filename, content):
     try:
         if content is not None:
+            print(content)
             with open(f'/tmp/{filename}', 'w') as file:
                 file.write(content)
+            print(f"Saved {filename} to /tmp")
             return f"Saved {filename} to /tmp"
         else:
             raise Exception("No content to save.")
@@ -48,6 +53,7 @@ def check_tmp_for_data(query):
             if query in filename:
                 with open(f'/tmp/{filename}', 'r') as file:
                     data.append(file.read())
+        print(f"Found {len(data)} file(s) in /tmp for query {query}")
         return data if data else None
     except Exception as e:
         print(f"Error while checking /tmp for query {query}: {e}")
@@ -80,15 +86,39 @@ def handle_search(event):
     content = get_page_content(input_url)
     if content is None:
         return {"error": "Failed to retrieve content"}
-
+    
+    # Parse and clean HTML content
+    cleaned_content = parse_html_content(content)
+    
     filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
-    save_result = save_to_tmp(filename, content)
+    save_result = save_to_tmp(filename, cleaned_content)
+    
     if save_result is None:
         return {"error": "Failed to save to /tmp"}
 
-    return {"results": {'url': input_url, 'tmp_save_result': save_result}}
+    return {"results": {'url': input_url, 'content': cleaned_content}}
 
-# Modify lambda_handler accordingly
+
+
+
+
+
+def parse_html_content(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    # Remove script and style elements
+    for script_or_style in soup(["script", "style"]):
+        script_or_style.decompose()
+    # Get text
+    text = soup.get_text()
+    # Break into lines and remove leading and trailing space on each
+    lines = (line.strip() for line in text.splitlines())
+    # Break multi-headlines into a line each
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    # Drop blank lines
+    cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+    return cleaned_text
+
+
 def lambda_handler(event, context):
     response_code = 200
     action_group = event['actionGroup']
@@ -117,6 +147,6 @@ def lambda_handler(event, context):
     }
 
     api_response = {'messageVersion': '1.0', 'response': action_response}
-    print("RESPONSE: ", action_response)
-    
+    print("action_response: ", action_response)
+    print("response_body: ", response_body)
     return api_response
