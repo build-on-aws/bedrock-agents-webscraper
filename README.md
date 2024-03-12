@@ -67,6 +67,7 @@ curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/ma
 import requests
 import os
 import shutil
+import json
 from bs4 import BeautifulSoup
 
 # Fetch URL and extract text
@@ -176,9 +177,16 @@ def parse_html_content(html_content):
     lines = (line.strip() for line in text.splitlines())
     # Break multi-headlines into a line each
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    # Drop blank lines
+    # Drop blank lines and concatenate into a single string
     cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+    
+    # Truncate to ensure it does not exceed 25KB
+    max_size = 25000  # Max size in characters
+    if len(cleaned_text) > max_size:
+        cleaned_text = cleaned_text[:max_size]  # Truncate to the max size
+    
     return cleaned_text
+
 
 
 def lambda_handler(event, context):
