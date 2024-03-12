@@ -12,6 +12,7 @@
 ## Library dependencies
 - [requests](https://pypi.org/project/requests/)
 - [googlesearch-python](https://pypi.org/project/googlesearch-python/)
+- [beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
 
 
 
