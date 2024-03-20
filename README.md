@@ -427,7 +427,7 @@ def lambda_handler(event, context):
 - Select the **Anthropic: Claude Instant V1 model**. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. After, select **Next**.
 
    ```text
-  You are a research analyst that webscrapes websites, and searches the internet to provide information based on a <question>. You provide concise answers in a friendly manner.
+  You are a research analyst that webscrapes websites, and searches the internet to provide information based on a {question}. You provide concise answers in a friendly manner.
    ```
 
 ![Model select2](images/select_model.png)
