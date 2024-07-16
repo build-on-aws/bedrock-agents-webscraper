@@ -228,15 +228,13 @@ def lambda_handler(event, context):
 
 ![Lambda deploy](images/lambda_deploy.png)
 
-
 - Next, apply a resource policy to the Lambda to grant Bedrock agent access. To do this, we will switch the top tab from **code** to **configuration** and the side tab to **Permissions**. Then, scroll to the **Resource-based policy statements** section and click the **Add permissions** button.
 
 ![Permissions config](images/permissions_config.png)
 
 ![Lambda resource policy create](images/lambda_resource_policy_create.png)
 
-
-- Here is an example of the resource policy. (At this part of the setup, we will not have a Bedrock agent Source ARN. So, enter in `arn:aws:bedrock:us-west-2:{accoundID}:agent/BedrockAgentID` for now. We will include the ARN once it’s generated in step 4 after creating the Bedrock agent)
+- Here is an example of the resource policy. (At this part of the setup, we will allow any Bedrock agent to access our Lambda, however, as best practice limit access to a specific Bedrock agent Source ARN. So, enter in `arn:aws:bedrock:us-west-2:{YOUR_ACCOUNT_ID}:agent/*`. You can include the ARN once it’s generated in step 4 after creating the Bedrock agent)
 
 
 ![Lambda resource policy](images/lambda_resource_policy.png)
@@ -247,7 +245,7 @@ def lambda_handler(event, context):
 ![Lambda config 1](images/lambda_config_1.png)
 
 
-- Update Memory to 4048MB, Ephemeral storage to 1024MB, and Timeout to 1 minute. Leave the other settings as default, then select Save.
+- Update Memory to **4048MB**, Ephemeral storage to **1024MB**, and Timeout to **1 minute**. Leave the other settings as default, then select Save.
 
 ![Lambda config 2](images/lambda_config_2.png)
 
@@ -415,16 +413,16 @@ def lambda_handler(event, context):
 
 
 ### Step 4: Setup Bedrock Agent and Action Group 
-- Navigate to the Bedrock console, go to the toggle on the left, and under **Orchestration** select **Agents**, then select **Create Agent**.
+- Navigate to the Bedrock console, go to the toggle on the left, and under **Builder tools** select **Agents**, then select **Create Agent**.
 
 ![Orchestration2](images/orchestration2.png)
 
-- On the next screen, provide an agent name, like "WebscrapeAgent". Leave the other options as default, then select **Next**.
+- On the next screen, provide an agent name, like "WebscrapeAgent". Leave the other options as default, then select **Create**.
 
 ![Agent details](images/agent_details.gif)
 
 
-- Select the **Anthropic: Claude Instant V1 model**. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. After, select **Next**.
+- Select the **Anthropic: Claude 3 Haiku model**. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. After, select **Next**.
 
    ```text
   You are a research analyst that webscrapes websites, and searches the internet to provide information based on a {question}. You provide concise answers in a friendly manner.
@@ -432,11 +430,11 @@ def lambda_handler(event, context):
 
 ![Model select2](images/select_model.png)
 
-- Provide an action group name like "webscrape". Select the Lambda function `bedrock-agent-webscrape`. For the S3 Url, select the `schema webscrape-schema.json` file in the S3 bucket `artifacts-bedrock-agent-webscrape-alias`.
+- Under Action groups click Add. Provide an action group name like "webscrape". Under **Action group type** choose **Define with API schemas**. Select the Lambda function `bedrock-agent-webscrape`. For the S3 Url, select the `schema webscrape-schema.json` file in the S3 bucket `artifacts-bedrock-agent-webscrape-alias`.
 
 ![Add action group](images/action_group_add.png)
 
-- After, select **Next**, then **Next** again as we are not adding a knowledge base. On the last screen, select **Create Agent**.
+- After, hit **Create** and **Save and exit**.
 
 - You are now done setting up the webscrape action group. You will need to create another action group following the exact same process for the internet-search, using the schema [internet-search-schema.json](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/schema/internet-search-schema.json) file.
 
@@ -446,11 +444,11 @@ def lambda_handler(event, context):
 
 ![bedrock agent screen 1](images/bedrock_agent_screen_1.png)
 
-- Scroll down, then select Working draft. Under Advanced prompts, select Edit.
+- Scroll down, then select Working draft. Under **Advanced prompts**, select **Edit**.
 
 ![bedrock agent screen 2](images/bedrock_agent_screen_2.png)
 
-- Your tab should already be on **Pre-processing**. Toggle on the **Override pre-processing template defaults** radio button. Also make sure the **Activate pre-processing template** radio button is on like below.
+- Your tab should already be on **Pre-processing**. Toggle on the **Override pre-processing template defaults** radio button and **Confirm** in a pop-up. Also make sure the **Activate pre-processing template** radio button is **ON**** like below.
 
 - Under *prompt template editor*, you will notice that you now have access to control the pre-built prompts. Scroll down to until you see "Category D". Replace this category section with the following:
 
