@@ -21,7 +21,7 @@
           }
         ],
         "requestBody": {
-          "description": "Additional internet serach parameters",
+          "description": "Additional internet search parameters",
           "required": true,
           "content": {
             "application/json": {
