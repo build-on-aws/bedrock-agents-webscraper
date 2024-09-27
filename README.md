@@ -359,7 +359,7 @@ def lambda_handler(event, context):
 
 
 ### Step 3: Setup Bedrock Agent and Action Group 
-- Navigate to the Bedrock console. Go to the toggle on the left, and under **Builder tools** select ***Agents***, then ***Create Agent***. Provide an agent name, like `athena-agent` then ***Create***.
+- Navigate to the Bedrock console. Go to the toggle on the left, and under **Builder tools** select ***Agents***, then ***Create Agent***. Provide an agent name, like `webscrape` then ***Create***.
 
 
 ![agent_create](images/agent_create.png)
