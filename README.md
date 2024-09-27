@@ -37,7 +37,7 @@ Alternatively, this README will guide you through the step-by-step process of se
 ![Access granted](images/access_granted.png)
 
 
-## Deploy resources via AWS Cloudformation:
+## Deploy resources via AWS Cloudformation for the Amazon Bedrock Agent:
 *Here are the instructions to deploy the resources within your environment:*
 
 ***Step 1***
@@ -103,7 +103,7 @@ Click here to download template 2 🚀 - [2 - EC2 UI Stack](https://github.com/b
 
 
 
-## Step-by-step Configuration and Setup
+## Step-by-step Setup for the Amazon Bedrock Agent
 
 ### Step 1: AWS Lambda Function Configuration
 
