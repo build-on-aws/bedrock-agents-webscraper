@@ -2,4 +2,5 @@ streamlit
 pandas
 Pillow
 boto3
+lxml
 
