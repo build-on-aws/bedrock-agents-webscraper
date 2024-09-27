@@ -363,14 +363,26 @@ def search_google(query):
         return []
 
 def handle_search(event):
-    input_text = event.get('inputText', '')
+    # Extract the query from the requestBody
+    request_body = event.get('requestBody', {})
+    query = ""
 
-    print("Performing Google search...")
-    urls_to_scrape = search_google(input_text)
+    # Check if the query exists within the requestBody
+    if 'content' in request_body:
+        properties = request_body['content'].get('application/json', {}).get('properties', [])
+        query = next((prop['value'] for prop in properties if prop['name'] == 'query'), '')
+
+    # Fallback to 'inputText' if 'query' is not provided
+    if not query:
+        query = event.get('inputText', '')
+
+    print(f"Performing Google search for query: {query}")
+    urls_to_scrape = search_google(query)
 
     aggregated_content = ""
-    results = []
     total_size = 0  # Track the total size of the response
+    truncated = False  # Flag to indicate if the content is truncated
+    search_results = []  # To store the actual content results
 
     for url in urls_to_scrape:
         print("URLs Used: ", url)
@@ -382,16 +394,21 @@ def handle_search(event):
             # Check size before adding more content
             if total_size + sys.getsizeof(content_to_add) > MAX_RESPONSE_SIZE:
                 print(f"Response exceeds size limit. Truncating content...")
-                break  # Stop adding content if the limit is reached
+                # Add as much content as possible
+                remaining_size = MAX_RESPONSE_SIZE - total_size
+                truncated_content = content_to_add[:remaining_size]
+                aggregated_content += truncated_content
+                search_results.append({"content": truncated_content, "warning": "Content truncated due to size limits"})
+                truncated = True  # Set the flag to indicate truncation
+                break  # Stop adding content
 
             aggregated_content += content_to_add
             total_size = sys.getsizeof(aggregated_content)  # Update the size tracker
-
-            results.append({'url': url, 'status': 'Content aggregated'})
+            search_results.append({"content": content})
         else:
-            results.append({'url': url, 'error': 'Failed to fetch content'})
+            search_results.append({'url': url, 'error': 'Failed to fetch content'})
 
-    return {"results": results}
+    return {"results": search_results}
 
 def lambda_handler(event, context):
     print("THE EVENT: ", event)
