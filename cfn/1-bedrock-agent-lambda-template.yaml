@@ -4,7 +4,7 @@ Description: CloudFormation template to create an AWS Bedrock Agent resource, La
 Parameters:
   FoundationModel:
     Type: String
-    Default: 'anthropic.claude-3-haiku-20240307-v1:0'
+    Default: 'anthropic.claude-3-5-sonnet-20240620-v1:0'
   Alias:
     Type: String
     Default: '{ENTER ALIAS}'
@@ -185,19 +185,31 @@ Resources:
           import os
           import shutil
           import json
+          import gzip
+          import io
           from bs4 import BeautifulSoup
+          import sys  # Import sys to get the size of the response
+
+          MAX_RESPONSE_SIZE = 22000  # 22KB limit
 
           def get_page_content(url):
               try:
                   req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
                   with urllib.request.urlopen(req) as response:
+                      # Check if the content is compressed with GZIP
+                      if response.info().get('Content-Encoding') == 'gzip':
+                          print(f"Content from {url} is GZIP encoded, decompressing...")
+                          buf = io.BytesIO(response.read())
+                          with gzip.GzipFile(fileobj=buf) as f:
+                              content = f.read().decode('utf-8')
+                      else:
+                          content = response.read().decode('utf-8')
+                      
                       if response.geturl() != url:  # Check if there were any redirects
                           print(f"Redirect detected for {url}")
                           return None
-                      elif response:
-                          return response.read().decode('utf-8')
-                      else:
-                          raise Exception("No response from the server.")
+
+                      return content
               except Exception as e:
                   print(f"Error while fetching content from {url}: {e}")
                   return None
@@ -244,36 +256,58 @@ Resources:
                   return None
 
           def handle_search(event):
-              parameters = event.get('parameters', [])
-              input_url = next((param['value'] for param in parameters if param['name'] == 'inputURL'), '')
+              # Extract inputURL from the requestBody content
+              request_body = event.get('requestBody', {})
+              input_url = ''
+              
+              # Check if the inputURL exists within the properties
+              if 'content' in request_body:
+                  properties = request_body['content'].get('application/json', {}).get('properties', [])
+                  input_url = next((prop['value'] for prop in properties if prop['name'] == 'inputURL'), '')
 
+              # Handle missing URL
               if not input_url:
                   return {"error": "No URL provided"}
 
+              # Ensure URL starts with http or https
               if not input_url.startswith(('http://', 'https://')):
                   input_url = 'http://' + input_url
 
+              # Check for existing data in /tmp
               tmp_data = check_tmp_for_data(input_url)
               if tmp_data:
                   return {"results": tmp_data}
 
+              # Clear /tmp folder
               empty_tmp_result = empty_tmp_folder()
               if empty_tmp_result is None:
                   return {"error": "Failed to empty /tmp folder"}
 
+              # Get the page content
               content = get_page_content(input_url)
               if content is None:
                   return {"error": "Failed to retrieve content"}
 
+              # Parse and clean the HTML content
               cleaned_content = parse_html_content(content)
 
+              # Save the content to /tmp
               filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
               save_result = save_to_tmp(filename, cleaned_content)
 
               if save_result is None:
                   return {"error": "Failed to save to /tmp"}
 
-              return {"results": {'url': input_url, 'content': cleaned_content}}
+              # Check the size of the response and truncate if necessary
+              response_data = {'url': input_url, 'content': cleaned_content}
+              response_size = sys.getsizeof(json.dumps(response_data))
+
+              if response_size > MAX_RESPONSE_SIZE:
+                  print(f"Response size {response_size} exceeds limit. Truncating content...")
+                  truncated_content = cleaned_content[:(MAX_RESPONSE_SIZE - response_size)]
+                  response_data['content'] = truncated_content
+
+              return {"results": response_data}
 
           def parse_html_content(html_content):
               soup = BeautifulSoup(html_content, 'html.parser')
@@ -289,7 +323,6 @@ Resources:
                   cleaned_text = cleaned_text[:max_size]
 
               return cleaned_text
-
 
           def lambda_handler(event, context):
               response_code = 200
@@ -351,10 +384,11 @@ Resources:
         ZipFile: |
           import json
           import urllib.request
-          import os
-          import shutil
           from googlesearch import search
           from bs4 import BeautifulSoup
+          import sys  # Import sys to check the size of the response
+
+          MAX_RESPONSE_SIZE = 22000  # 22KB limit
 
           def get_page_content(url):
               try:
@@ -375,34 +409,6 @@ Resources:
                   print(f"Error while fetching and cleaning content from {url}: {e}")
                   return None
 
-          def empty_tmp_directory():
-              try:
-                  folder = '/tmp'
-                  for filename in os.listdir(folder):
-                      file_path = os.path.join(folder, filename)
-                      try:
-                          if os.path.isfile(file_path) or os.path.islink(file_path):
-                              os.unlink(file_path)
-                          elif os.path.isdir(file_path):
-                              shutil.rmtree(file_path)
-                      except Exception as e:
-                          print(f"Failed to delete {file_path}. Reason: {e}")
-                  print("Temporary directory emptied.")
-              except Exception as e:
-                  print(f"Error while emptying /tmp directory: {e}")
-
-          def save_content_to_tmp(content, filename):
-              try:
-                  if content is not None:
-                      with open(f'/tmp/{filename}', 'w', encoding='utf-8') as file:
-                          file.write(content)
-                      print(f"Saved {filename} to /tmp")
-                      return f"Saved {filename} to /tmp"
-                  else:
-                      raise Exception("No content to save.")
-              except Exception as e:
-                  print(f"Error while saving {filename} to /tmp: {e}")
-
           def search_google(query):
               try:
                   search_results = []
@@ -414,36 +420,52 @@ Resources:
                   return []
 
           def handle_search(event):
-              input_text = event.get('inputText', '')
+              # Extract the query from the requestBody
+              request_body = event.get('requestBody', {})
+              query = ""
 
-              print("Emptying temporary directory...")
-              empty_tmp_directory()
+              # Check if the query exists within the requestBody
+              if 'content' in request_body:
+                  properties = request_body['content'].get('application/json', {}).get('properties', [])
+                  query = next((prop['value'] for prop in properties if prop['name'] == 'query'), '')
 
-              print("Performing Google search...")
-              urls_to_scrape = search_google(input_text)
+              # Fallback to 'inputText' if 'query' is not provided
+              if not query:
+                  query = event.get('inputText', '')
+
+              print(f"Performing Google search for query: {query}")
+              urls_to_scrape = search_google(query)
 
               aggregated_content = ""
-              results = []
+              total_size = 0  # Track the total size of the response
+              truncated = False  # Flag to indicate if the content is truncated
+              search_results = []  # To store the actual content results
+
               for url in urls_to_scrape:
                   print("URLs Used: ", url)
                   content = get_page_content(url)
                   if content:
                       print("CONTENT: ", content)
-                      filename = url.split('//')[-1].replace('/', '_') + '.txt'
-                      aggregated_content += f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
-                      results.append({'url': url, 'status': 'Content aggregated'})
+                      content_to_add = f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
+                      
+                      # Check size before adding more content
+                      if total_size + sys.getsizeof(content_to_add) > MAX_RESPONSE_SIZE:
+                          print(f"Response exceeds size limit. Truncating content...")
+                          # Add as much content as possible
+                          remaining_size = MAX_RESPONSE_SIZE - total_size
+                          truncated_content = content_to_add[:remaining_size]
+                          aggregated_content += truncated_content
+                          search_results.append({"content": truncated_content, "warning": "Content truncated due to size limits"})
+                          truncated = True  # Set the flag to indicate truncation
+                          break  # Stop adding content
+
+                      aggregated_content += content_to_add
+                      total_size = sys.getsizeof(aggregated_content)  # Update the size tracker
+                      search_results.append({"content": content})
                   else:
-                      results.append({'url': url, 'error': 'Failed to fetch content'})
+                      search_results.append({'url': url, 'error': 'Failed to fetch content'})
 
-              aggregated_filename = f"aggregated_{input_text.replace(' ', '_')}.txt"
-              print("Saving aggregated content to /tmp...")
-              save_result = save_content_to_tmp(aggregated_content, aggregated_filename)
-              if save_result:
-                  results.append({'aggregated_file': aggregated_filename, 'tmp_save_result': save_result})
-              else:
-                  results.append({'aggregated_file': aggregated_filename, 'error': 'Failed to save aggregated content to /tmp'})
-
-              return {"results": results}
+              return {"results": search_results}
 
           def lambda_handler(event, context):
               print("THE EVENT: ", event)
@@ -473,6 +495,8 @@ Resources:
               print("RESPONSE: ", action_response)
 
               return api_response
+
+
 
   LambdaInvokePermission:
     Type: 'AWS::Lambda::Permission'
@@ -508,18 +532,6 @@ Resources:
       Instruction: |
         You are a research analyst that webscrapes the internet when provided a {question}. You use web searches to find relevant websites and information, or a webscraper to retrieve the content of individual webpages for review. Do not use both options unless explicitly told to do so.You should prefer information from reliable sources, such as the official website, crunchbase, or news organizations. Some companies are startups and may be hard to find, so you should try multiple searches. Some websites will block the webscraper, you should try alternative sources. If you can't determine a relatable response based on the request provided, answer false. Your output should be a JSON document that includes the company name, a yes/no answer, and a summary of your explanation. If your output is an error, you should also respond with a JSON document that includes the error.
         Example output:
-        {
-        "request": "{question}",
-        "builds_hardware": True,
-        "explanation": "Based on their website this company builds avionics systems..."
-        }
-
-        Example output:
-        {
-        "request": "{question}",
-        "error": True,
-        "explanation": "Unable to retrieve web search results"
-        }
 
       Description: "Uses a web URL to search the internet"
       IdleSessionTTLInSeconds: 900
