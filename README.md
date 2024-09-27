@@ -21,38 +21,10 @@
 
 ## Configuration and Setup
 
-### Step 1: Creating S3 Bucket
 
-- **Artifacts & Lambda layer Bucket**: Create an S3 bucket to store artifacts. For example, call it `artifacts-bedrock-agent-webscrape-{alias}`.
-  
-![Bucket create 1](images/bucket_setup.gif)
+### Step 1: AWS Lambda Function Configuration
 
-
-Next, download and add the API schema files to this S3 bucket from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/tree/main/schema). To do that, open a command prompt, and run these `curl` commands to download these files to your **Documents** folder:
-
-For **Mac**
-```linux
-curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/internet-search-schema.json --output ~/Downloads/internet-search-schema.json
-
-curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/webscrape-schema.json --output ~/Downloads/webscrape-schema.json
-```
-
-For **Windows**
-```windows
-curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/internet-search-schema.json --output %USERPROFILE%\Downloads\internet-search-schema.json
-
-curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/main/schema/webscrape-schema.json --output %USERPROFILE%\Downloads\webscrape-schema.json
-```
-
-- The provided schemas are an API schema specification for the Webscrape & Internet Search that outlines the structure required to call the functions. These API Schemas is a rich description of an action, so the agent knows when to use it, and exactly how to call it and use results. Make sure to open the .json documents to review the content.
-
-- Next, download the .zip file for the lambda layer from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/layer-python-requests-googlesearch-beatifulsoup.zip), Once all of these files are downloaded, upload them to S3 bucket `artifacts-bedrock-agent-webscrape-{alias}`.
-
-![Loaded Artifact](images/loaded_artifact.png)
-
-
-### Step 2: Lambda Function Configuration
-- Create a Lambda function (Python 3.12) for the Bedrock agent's action group. We will call this Lambda function `bedrock-agent-webscrape`. 
+- Navigate to the AWS Lambda management console, and create a Lambda function (Python 3.12) for the Bedrock agent's action group. We will call this Lambda function `bedrock-agent-webscrape`. 
 
 ![Create Function](images/create_function.png)
 
@@ -63,23 +35,23 @@ curl https://raw.githubusercontent.com/build-on-aws/bedrock-agents-webscraper/ma
 
 
 ```python
-import requests
+import urllib.request
 import os
 import shutil
 import json
 from bs4 import BeautifulSoup
 
-# Fetch URL and extract text
 def get_page_content(url):
     try:
-        response = requests.get(url)
-        if response.history:  # Check if there were any redirects
-            print(f"Redirect detected for {url}")
-            return None  # Return None to indicate a redirect occurred
-        elif response:
-            return response.text
-        else:
-            raise Exception("No response from the server.")
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            if response.geturl() != url:  # Check if there were any redirects
+                print(f"Redirect detected for {url}")
+                return None
+            elif response:
+                return response.read().decode('utf-8')
+            else:
+                raise Exception("No response from the server.")
     except Exception as e:
         print(f"Error while fetching content from {url}: {e}")
         return None
@@ -125,35 +97,28 @@ def check_tmp_for_data(query):
         print(f"Error while checking /tmp for query {query}: {e}")
         return None
 
-# Modify handle_search function to use tmp folder instead of S3
 def handle_search(event):
-    # Extract 'inputURL' from parameters
     parameters = event.get('parameters', [])
     input_url = next((param['value'] for param in parameters if param['name'] == 'inputURL'), '')
 
     if not input_url:
         return {"error": "No URL provided"}
 
-    # Ensure URL starts with http:// or https://
     if not input_url.startswith(('http://', 'https://')):
         input_url = 'http://' + input_url
 
-    # Check /tmp directory first
     tmp_data = check_tmp_for_data(input_url)
     if tmp_data:
         return {"results": tmp_data}
 
-    # Empty the /tmp directory before saving new files
     empty_tmp_result = empty_tmp_folder()
     if empty_tmp_result is None:
         return {"error": "Failed to empty /tmp folder"}
 
-    # Scrape content from the provided URL
     content = get_page_content(input_url)
     if content is None:
         return {"error": "Failed to retrieve content"}
 
-    # Parse and clean HTML content
     cleaned_content = parse_html_content(content)
 
     filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
@@ -164,28 +129,20 @@ def handle_search(event):
 
     return {"results": {'url': input_url, 'content': cleaned_content}}
 
-
 def parse_html_content(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
-    # Remove script and style elements
     for script_or_style in soup(["script", "style"]):
         script_or_style.decompose()
-    # Get text
     text = soup.get_text()
-    # Break into lines and remove leading and trailing space on each
     lines = (line.strip() for line in text.splitlines())
-    # Break multi-headlines into a line each
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    # Drop blank lines and concatenate into a single string
     cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
-    
-    # Truncate to ensure it does not exceed 25KB
-    max_size = 25000  # Max size in characters
-    if len(cleaned_text) > max_size:
-        cleaned_text = cleaned_text[:max_size]  # Truncate to the max size
-    
-    return cleaned_text
 
+    max_size = 25000
+    if len(cleaned_text) > max_size:
+        cleaned_text = cleaned_text[:max_size]
+
+    return cleaned_text
 
 
 def lambda_handler(event, context):
@@ -222,7 +179,7 @@ def lambda_handler(event, context):
 ```
 
 
-- This above code takes the url from the event passed in from the bedrock agent, then uses the **requests** library to call, then scrape the webpage. The **beatifulsoup** library is used to clean up the scraped data. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code, then **Deploy** the Lambda before moving to the next step.
+- This above code takes the url from the event passed in from the bedrock agent, then uses the **urllib.request** library to call, then scrape the webpage. The **beatifulsoup** library is used to clean up the scraped data. The scraped data is saved to the `/tmp` directory of the Lambda function, then passed into the response back to the agent. Review the code, then **Deploy** the Lambda before moving to the next step.
 
 
 ![Lambda deploy](images/lambda_deploy.png)
@@ -253,7 +210,7 @@ def lambda_handler(event, context):
 
 ```python
 import json
-import requests
+import urllib.request
 import os
 import shutil
 from googlesearch import search
@@ -261,28 +218,22 @@ from bs4 import BeautifulSoup
 
 def get_page_content(url):
     try:
-        response = requests.get(url)
-        if response:
-            # Parse HTML content
-            soup = BeautifulSoup(response.text, 'html.parser')
-            # Remove script and style elements
-            for script_or_style in soup(["script", "style"]):
-                script_or_style.decompose()
-            # Get text
-            text = soup.get_text()
-            # Break into lines and remove leading and trailing space on each
-            lines = (line.strip() for line in text.splitlines())
-            # Break multi-headlines into a line each
-            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-            # Drop blank lines
-            cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
-            return cleaned_text
-        else:
-            raise Exception("No response from the server.")
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            if response:
+                soup = BeautifulSoup(response.read().decode('utf-8'), 'html.parser')
+                for script_or_style in soup(["script", "style"]):
+                    script_or_style.decompose()
+                text = soup.get_text()
+                lines = (line.strip() for line in text.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+                return cleaned_text
+            else:
+                raise Exception("No response from the server.")
     except Exception as e:
         print(f"Error while fetching and cleaning content from {url}: {e}")
         return None
-
 
 def empty_tmp_directory():
     try:
@@ -323,13 +274,11 @@ def search_google(query):
         return []
 
 def handle_search(event):
-    input_text = event.get('inputText', '')  # Extract 'inputText'
+    input_text = event.get('inputText', '')
 
-    # Empty the /tmp directory before saving new files
     print("Emptying temporary directory...")
     empty_tmp_directory()
 
-    # Proceed with Google search
     print("Performing Google search...")
     urls_to_scrape = search_google(input_text)
 
@@ -340,15 +289,13 @@ def handle_search(event):
         content = get_page_content(url)
         if content:
             print("CONTENT: ", content)
-            filename = url.split('//')[-1].replace('/', '_') + '.txt'  # Simple filename from URL
+            filename = url.split('//')[-1].replace('/', '_') + '.txt'
             aggregated_content += f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
             results.append({'url': url, 'status': 'Content aggregated'})
         else:
             results.append({'url': url, 'error': 'Failed to fetch content'})
 
-    # Define a single filename for the aggregated content
     aggregated_filename = f"aggregated_{input_text.replace(' ', '_')}.txt"
-    # Save the aggregated content to /tmp
     print("Saving aggregated content to /tmp...")
     save_result = save_content_to_tmp(aggregated_content, aggregated_filename)
     if save_result:
@@ -360,7 +307,7 @@ def handle_search(event):
 
 def lambda_handler(event, context):
     print("THE EVENT: ", event)
-    
+
     response_code = 200
     if event.get('apiPath') == '/search':
         result = handle_search(event)
@@ -375,7 +322,7 @@ def lambda_handler(event, context):
     }
 
     action_response = {
-        'actionGroup': event['actionGroup'], 
+        'actionGroup': event['actionGroup'],
         'apiPath': event['apiPath'],
         'httpMethod': event['httpMethod'],
         'httpStatusCode': response_code,
@@ -384,14 +331,14 @@ def lambda_handler(event, context):
 
     api_response = {'messageVersion': '1.0', 'response': action_response}
     print("RESPONSE: ", action_response)
-    
+
     return api_response
 ```
 
 
-### Step 3: Create & attach Lambda layer
+### Step 2: Create & attach an AWS Lambda layer
 
-- In order to create this Lambda layer, you will need a .zip file of dependencies for the Lambda function that are not natively provided. We are using the **requests** and **googlesearrch** libraries for internet searching and web scraping. The dependencies are already packaged, and can be download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/layer-python-requests-googlesearch-beatifulsoup.zip).  
+- In order to create this Lambda layer, you will need a .zip file of dependencies for the Lambda function that are not natively provided. We are using the **urllib.request** and **googlesearch(not native)** libraries for internet searching and web scraping. The dependencies are already packaged, and can be download from [here](https://github.com/build-on-aws/bedrock-agents-webscraper/raw/main/lambda-layer/layer-python-requests-googlesearch-beatifulsoup.zip).  
 
 - After, navigate to the AWS Lambda console, then select **layers** from the left-side panel, then create layer.
   ![lambda layer 1](images/lambda_layer_1.png)
@@ -411,25 +358,88 @@ def lambda_handler(event, context):
 - You are now done creating and adding the dependencies needed via Lambda layer for your webscrape function. Now, add this same layer to the Lambda function `bedrock-agent-internet-search`, and verify that it has been added successfully.
 
 
-### Step 4: Setup Bedrock Agent and Action Group 
-- Navigate to the Bedrock console, go to the toggle on the left, and under **Builder tools** select **Agents**, then select **Create Agent**.
-
-![Orchestration2](images/orchestration2.png)
-
-- On the next screen, provide an agent name, like "WebscrapeAgent". Leave the other options as default, then select **Create**.
-
-![Agent details](images/agent_details.gif)
+### Step 3: Setup Bedrock Agent and Action Group 
+- Navigate to the Bedrock console. Go to the toggle on the left, and under **Builder tools** select ***Agents***, then ***Create Agent***. Provide an agent name, like `athena-agent` then ***Create***.
 
 
-- Select the **Anthropic: Claude 3 Haiku model**. Now, we need to add instructions by creating a prompt that defines the rules of operation for the agent. In the prompt below, we provide specific instructions for the agent on how to answer questions. Copy, then paste the details below into the agent instructions. After, select **Next**.
+![agent_create](images/agent_create.png)
 
-   ```text
+- For this next screen, agent description is optional. Use the default new service role. For the model, select **Anthropic Claude 3 Haiku**. Next, provide the following instruction for the agent:
+
+
+```instruction
   You are a research analyst that webscrapes websites, and searches the internet to provide information based on a {question}. You provide concise answers in a friendly manner.
-   ```
+```
 
-![Model select2](images/select_model.png)
+It should look similar to the following: 
 
-- Under Action groups click Add. Provide an action group name like "webscrape". Under **Action group type** choose **Define with API schemas**. Select the Lambda function `bedrock-agent-webscrape`. For the S3 Url, select the `schema webscrape-schema.json` file in the S3 bucket `artifacts-bedrock-agent-webscrape-alias`.
+![agent instruction](images/agent_instruction.png)
+
+
+- Scroll to the top, then select ***Save***.
+
+- Keep in mind that these instructions guide the generative AI application in its role as a research agent that uses specific urls to webscrape the internet. Alternatively, the user has an option to not specify a url, and do a general internet search based on request.
+
+
+- Next, we will add an action group. Scroll down to `Action groups` then select ***Add***.
+
+- Call the action group `webscrape`. In the `Action group type` section, select ***Define with API schemas***. For `Action group invocations`, set to ***Select an existing Lambda function***. For the Lambda function, select `bedrock-agent-webscrape`.
+
+- For the `Action group Schema`, we will choose ***Define with in-line OpenAPI schema editor***. Replace the default schema in the **In-line OpenAPI schema** editor with the schema provided below. You can also retrieve the schema from the repo [here](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/schema/webscrape-schema.json). After, select ***Add***.
+`(This API schema is needed so that the bedrock agent knows the format structure and parameters needed for the action group to interact with the Lambda function.)`
+
+```schema
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Webscrape API", 
+    "description": "An API that will take in a URL, then scrape and store the content from the URL in an S3 bucket.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/search": {
+      "post": {
+        "description": "content scraping endpoint",
+        "parameters": [
+          {
+            "name": "inputURL",
+            "in": "query",
+            "description": "URL to scrape content from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "upload_result": {
+                      "type": "string",
+                      "description": "Result of uploading content to S3"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Your configuration should look like the following:
+
+
+![ag create gif](images/action_group_creation.gif)
+
 
 ![Add action group](images/action_group_add.png)
 
@@ -438,32 +448,23 @@ def lambda_handler(event, context):
 - You are now done setting up the webscrape action group. You will need to create another action group following the exact same process for the internet-search, using the schema [internet-search-schema.json](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/schema/internet-search-schema.json) file.
 
 
-### Step 5: Modify Bedrock Agent Advance Prompts
-- Once your agent is created, we need to modify the advance prompts in the Bedrock agent for pre-processing so that the agent will allow us to use webscraping and internet searching. Navigate back to the Agent overview screen for your WebscrapeAgent, like below. 
+### Step 4: Create an alias
+- At the top, select **Save**, then **Prepare**. After, select **Save and exit**. Then, scroll down to the **Alias** section and select ***Create***. Choose a name of your liking, then create the alias. Make sure to copy and save your **AliasID**. Also, scroll to the top and save the **Agent ID** located in the **Agent overview** section. You will need this in step 7. Refer to the screenshots below.
+ 
+ ***Alias Agent ID***
 
-![bedrock agent screen 1](images/bedrock_agent_screen_1.png)
+![Create alias](images/create_alias.png)
 
-- Scroll down, then select Working draft. Under **Advanced prompts**, select **Edit**.
+ ***Agent ID***
+ 
+![Agent ARN2](images/agent_arn2.png)
 
-![bedrock agent screen 2](images/bedrock_agent_screen_2.png)
-
-- Your tab should already be on **Pre-processing**. Toggle on the **Override pre-processing template defaults** radio button and **Confirm** in a pop-up. Also make sure the **Activate pre-processing template** radio button is **ON**** like below.
-
-- Under *prompt template editor*, you will notice that you now have access to control the pre-built prompts. Scroll down to until you see "Category D". Replace this category section with the following:
-
-   ```text
-  -Category D: Questions that can be answered by webscrape or internet search, or assisted by our function calling agent using ONLY the functions it has been provided or arguments from within <conversation_history> or relevant arguments it can gather using the askuser function.
-   ```
-
-- After, scroll down and select **Save & Exit**.
-
-![bedrock agent screen 4](images/bedrock_agent_screen_4.gif)
 
 
 ## Step 5: Testing the Setup
 
 ### Testing the Bedrock Agent
-- While on the Bedrock console, select **Agents** under the **Orchestration** tab, then the agent you created. Make sure to **Prepare** the agent so that the changes made can update. You will be able to enter prompts in the user interface to test your Bedrock agent action groups.
+- In the test UI on the right, select **Prepare**. Then, enter prompts in the user interface to test your Bedrock agent.
 
 ![Agent test](images/agent_test.png)
 
