@@ -4,13 +4,13 @@
 ## Introduction
 In this project, we will set up an Amazon Bedrock agent with two action groups. The first action group will enable the agent to web scrape a specific URL provided by the user, while the second action group allows the agent to perform an internet search based on a user query without requiring a URL.
 
-For those who prefer an Infrastructure-as-Code (IaC) solution, we provide an AWS CloudFormation template to deploy all the necessary resources, including the Bedrock agent, action groups, and two Lambda functions. If you prefer to deploy using AWS CloudFormation, please refer to the guide in the section below.
+For those who prefer an Infrastructure-as-Code (IaC) solution, we provide an AWS CloudFormation template to deploy all the necessary resources, including the Bedrock agent, action groups, and Lambda functions. If you prefer to deploy using AWS CloudFormation, please refer to the guide in the section below.
 
 Alternatively, this README will guide you through the step-by-step process of setting up the Amazon Bedrock agent manually using the AWS Console.
 
 ## Prerequisites
 - An active AWS Account.
-- Familiarity with AWS services like Amazon Bedrock, S3, and Lambda.
+- Familiarity with AWS services like Amazon Bedrock, and AWS Lambda.
 - Access will need to be granted to the **Anthropic Claude 3 Haiku** model from the Amazon Bedrock console.
   
 ## Library dependencies
@@ -32,7 +32,7 @@ Alternatively, this README will guide you through the step-by-step process of se
 - To have access to the required models, scroll down and select the checkbox for the **Anthropic: Claude 3 Haiku** model. Then in the bottom right, select **Next**, then **Submit**.
 
 
-- After, verify that the Access status of the Models are green with **Access granted**.
+- After, verify that the Access status of the Model is green with **Access granted**.
 
 ![Access granted](images/access_granted.png)
 
@@ -47,7 +47,7 @@ Download the Cloudformation templates from below, then deploy in order:
 Click here to download template 1 🚀 - [1 - Agent-Lambda Stack](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/cfn/1-bedrock-agent-lambda-template.yaml) 
 - This next template will create an Amazon bedrock agent, action group, with an associated Lambda function.
 
-Click here to download template 3 🚀 - [2 - EC2 UI Stack](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/cfn/2-ec2-streamlit-template.yaml)
+Click here to download template 2 🚀 - [2 - EC2 UI Stack](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/cfn/2-ec2-streamlit-template.yaml)
 - This template will be used to deploy an EC2 instance that will run the code for the Streamlit UI.
 
 ***Step 2***
@@ -69,7 +69,7 @@ Click here to download template 3 🚀 - [2 - EC2 UI Stack](https://github.com/b
 
    - Scroll down to the capabilities section, and acknowledge the warning message before submitting. 
 
-   - Once the stack is complete, follow the same process and deploy the remaing two templates. After, go to the next step.
+   - Once the stack is complete, follow the same steps to deploy the second template.
 
 ![Stack complete](images/stack_complete.png)
 
@@ -78,7 +78,7 @@ Click here to download template 3 🚀 - [2 - EC2 UI Stack](https://github.com/b
 
 ### Testing the Bedrock Agent
 
-- Navigate to the Bedrock console. Go to the toggle on the left, and under **Builder tools** select ***Agents***, then the `WebscrapeAgent-${Alias}` that was created.
+- Navigate to the Bedrock console. Go to the toggle on the left, and under **Builder tools** select ***Agents***, then the `WebscrapeAgent-{Alias}` that was created.
 
 ![navigate to agent](images/navigate_to_agent.png)
 
@@ -595,12 +595,12 @@ Your configuration should look like the following:
 
 
 2. **Deploy template via Cloudformation**:
-   - In your mangement console, search, then go to the CloudFormation service.
-   - Create a stack with new resources (standard)
+   - In your mangement console, search, then go to the AWS CloudFormation service.
+   - Create a stack with new resources (standard).
 
    ![Create stack](images/create_stack.png)
 
-   - Prepare template: Choose existing template -> Specify template: Upload a template file -> upload the template donaloaded from the previous step. 
+   - Prepare template: Choose existing template -> Specify template: Upload a template file -> upload the template downloaded from the previous step. 
 
   ![Create stack config](images/create_stack_config.png)
 
