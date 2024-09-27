@@ -645,9 +645,9 @@ paths:
 
    ![ec2 connect clip](images/ec2_connect.gif)
 
-   - Next, use the following command  to edit the InvokeAgent.py file:
+   - Next, use the following command  to edit the invoke_agent.py file:
      ```bash
-     sudo vi app/streamlit_app/InvokeAgent.py
+     sudo vi app/streamlit_app/invoke_agent.py
      ```
 
    - Press ***i*** to go into edit mode. Then, update the ***AGENT ID*** and ***Agent ALIAS ID*** values. 
