@@ -10,7 +10,6 @@
 - Access will need to be granted to the **Amazon Titan Embeddings G1 - Text** model, and **Anthropic Claude Instant** model from the Amazon Bedrock console.
   
 ## Library dependencies
-- [requests](https://pypi.org/project/requests/)
 - [googlesearch-python](https://pypi.org/project/googlesearch-python/)
 - [beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
 
