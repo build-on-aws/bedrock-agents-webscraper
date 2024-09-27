@@ -472,50 +472,42 @@ It should look similar to the following:
 `(This API schema is needed so that the bedrock agent knows the format structure and parameters needed for the action group to interact with the Lambda function.)`
 
 ```schema
-{
-  "openapi": "3.0.0",
-  "info": {
-    "title": "Webscrape API", 
-    "description": "An API that will take in a URL, then scrape and store the content from the URL in an S3 bucket.",
-    "version": "1.0.0"
-  },
-  "paths": {
-    "/search": {
-      "post": {
-        "description": "content scraping endpoint",
-        "parameters": [
-          {
-            "name": "inputURL",
-            "in": "query",
-            "description": "URL to scrape content from",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "upload_result": {
-                      "type": "string",
-                      "description": "Result of uploading content to S3"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
+openapi: 3.0.0
+info:
+  title: Webscrape API
+  version: 1.0.0
+  description: An API that will take in a URL, then scrape the internet to return the results.
+paths:
+  /search:
+    post:
+      summary: Scrape content from the provided URL
+      description: Takes in a URL and scrapes content from it.
+      operationId: scrapeContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inputURL:
+                  type: string
+                  description: The URL from which to scrape content
+              required:
+                - inputURL
+      responses:
+        "200":
+          description: Successfully scraped content from the URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scraped_content:
+                    type: string
+                    description: The content scraped from the URL.
+        "400":
+          description: Bad request. The input URL is missing or invalid.
 ```
 
 Your configuration should look like the following:
@@ -526,7 +518,49 @@ Your configuration should look like the following:
 
 - After, hit **Create** and **Save and exit**.
 
-- You are now done setting up the webscrape action group. You will need to create another action group following the exact same process for the internet-search, using the schema [internet-search-schema.json](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/schema/internet-search-schema.json) file.
+- You are now done setting up the webscrape action group. You will need to create another action group following the exact same process for the ***internet-search***, using the schema below:
+
+```schema
+openapi: 3.0.0
+info:
+  title: Internet Search API
+  version: 1.0.0
+  description: An API that will take in user input, then conduct an internet search that matches the inquiry as close as possible.
+paths:
+  /search:
+    post:
+      summary: Conduct an internet search based on user input
+      description: Takes a user input query, conducts an internet search, and returns the search results.
+      operationId: conductInternetSearch
+      requestBody:
+        description: The search query and additional internet search parameters.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: The search query text provided by the user.
+                depth:
+                  type: integer
+                  description: The maximum search depth to limit the results.
+              required:
+                - query
+      responses:
+        "200":
+          description: Successfully conducted the search and returned results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: URLs of search results.
+        "400":
+          description: Bad request. The search query is missing or invalid.
+```
 
 
 ### Step 4: Create an alias
