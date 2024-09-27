@@ -100,6 +100,15 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: 'InvokeLambdaPermissions'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'lambda:InvokeFunction'
+                Resource: '*'
 
   CustomLayerResource:
     Type: 'Custom::LambdaLayer'
@@ -121,7 +130,8 @@ Resources:
               Service: lambda.amazonaws.com
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
-        - !Ref CloudWatchLogsPolicy
+        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: 'SQSSendMessagePolicy'
           PolicyDocument:
@@ -131,9 +141,8 @@ Resources:
                 Action:
                   - 'sqs:SendMessage'
                 Resource:
-                  - !GetAtt WebscrapeLambdaDLQ.Arn  # Add permission for the Webscrape Lambda DLQ
-                  - !GetAtt InternetSearchLambdaDLQ.Arn  # Add permission for the InternetSearch Lambda DLQ
-
+                  - !GetAtt WebscrapeLambdaDLQ.Arn
+                  - !GetAtt InternetSearchLambdaDLQ.Arn
 
   CloudWatchLogsPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
@@ -497,7 +506,21 @@ Resources:
       AutoPrepare: 'True'
       FoundationModel: !Ref FoundationModel
       Instruction: |
-        You are a research analyst that webscrapes websites, and searches the internet to provide information based on a {question}. You provide concise answers in a friendly manner.
+        You are a research analyst that webscrapes the internet when provided a {question}. You use web searches to find relevant websites and information, or a webscraper to retrieve the content of individual webpages for review. Do not use both options unless explicitly told to do so.You should prefer information from reliable sources, such as the official website, crunchbase, or news organizations. Some companies are startups and may be hard to find, so you should try multiple searches. Some websites will block the webscraper, you should try alternative sources. If you can't determine a relatable response based on the request provided, answer false. Your output should be a JSON document that includes the company name, a yes/no answer, and a summary of your explanation. If your output is an error, you should also respond with a JSON document that includes the error.
+        Example output:
+        {
+        "request": "{question}",
+        "builds_hardware": True,
+        "explanation": "Based on their website this company builds avionics systems..."
+        }
+
+        Example output:
+        {
+        "request": "{question}",
+        "error": True,
+        "explanation": "Unable to retrieve web search results"
+        }
+
       Description: "Uses a web URL to search the internet"
       IdleSessionTTLInSeconds: 900
       ActionGroups:
@@ -507,115 +530,89 @@ Resources:
             Lambda: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:WebscrapeLambda-${AWS::AccountId}'
           ApiSchema:
             Payload: |
-              {
-                "openapi": "3.0.0",
-                "info": {
-                  "title": "Webscrape API", 
-                  "description": "An API that will take in a URL, then scrape and store the content from the URL in an S3 bucket.",
-                  "version": "1.0.0"
-                },
-                "paths": {
-                  "/search": {
-                    "post": {
-                      "description": "content scraping endpoint",
-                      "parameters": [
-                        {
-                          "name": "inputURL",
-                          "in": "query",
-                          "description": "URL to scrape content from",
-                          "required": true,
-                          "schema": {
-                            "type": "string"
-                          }
-                        }
-                      ],
-                      "responses": {
-                        "200": {
-                          "description": "Successful response",
-                          "content": {
-                            "application/json": {
-                              "schema": {
-                                "type": "object",
-                                "properties": {
-                                  "upload_result": {
-                                    "type": "string",
-                                    "description": "Result of uploading content to S3"
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              openapi: 3.0.0
+              info:
+                title: Webscrape API
+                version: 1.0.0
+                description: An API that will take in a URL, then scrape the internet to return the results.
+              paths:
+                /search:
+                  post:
+                    summary: Scrape content from the provided URL
+                    description: Takes in a URL and scrapes content from it.
+                    operationId: scrapeContent
+                    requestBody:
+                      required: true
+                      content:
+                        application/json:
+                          schema:
+                            type: object
+                            properties:
+                              inputURL:
+                                type: string
+                                description: The URL from which to scrape content
+                            required:
+                              - inputURL
+                    responses:
+                      "200":
+                        description: Successfully scraped content from the URL
+                        content:
+                          application/json:
+                            schema:
+                              type: object
+                              properties:
+                                scraped_content:
+                                  type: string
+                                  description: The content scraped from the URL.
+                      "400":
+                        description: Bad request. The input URL is missing or invalid.
+
+
         - ActionGroupName: "internet-search"
           Description: "This action group is used to search the internet."
           ActionGroupExecutor:
             Lambda: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:InternetSearchLambda-${Alias}'
           ApiSchema:
             Payload: |
-              {
-                "openapi": "3.0.0",
-                "info": {
-                  "title": "Internet Search API", 
-                  "description": "An API that will take in user input, then will conduct an internet search that matches the inquiry as close as possible",
-                  "version": "1.0.0"
-                },
-                "paths": {
-                  "/search": {
-                    "post": {
-                      "description": "Internet search endpoint",
-                      "parameters": [
-                        {
-                          "name": "query",
-                          "in": "query",
-                          "description": "Search query text",
-                          "required": true,
-                          "schema": {
-                            "type": "string"
-                          }
-                        }
-                      ],
-                      "requestBody": {
-                        "description": "Additional internet serach parameters",
-                        "required": true,
-                        "content": {
-                          "application/json": {
-                            "schema": {
-                              "type": "object",
-                              "properties": {
-                                "depth": {
-                                  "type": "integer",
-                                  "description": "Maximum search depth"
-                                }
-                              }
-                            }
-                          }
-                        }
-                      },
-                      "responses": {
-                        "200": {
-                          "description": "Successful response",
-                          "content": {
-                            "application/json": {
-                              "schema": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-
+              openapi: 3.0.0
+              info:
+                title: Internet Search API
+                version: 1.0.0
+                description: An API that will take in user input, then conduct an internet search that matches the inquiry as close as possible.
+              paths:
+                /search:
+                  post:
+                    summary: Conduct an internet search based on user input
+                    description: Takes a user input query, conducts an internet search, and returns the search results.
+                    operationId: conductInternetSearch
+                    requestBody:
+                      description: The search query and additional internet search parameters.
+                      required: true
+                      content:
+                        application/json:
+                          schema:
+                            type: object
+                            properties:
+                              query:
+                                type: string
+                                description: The search query text provided by the user.
+                              depth:
+                                type: integer
+                                description: The maximum search depth to limit the results.
+                            required:
+                              - query
+                    responses:
+                      "200":
+                        description: Successfully conducted the search and returned results.
+                        content:
+                          application/json:
+                            schema:
+                              type: array
+                              items:
+                                type: string
+                                description: URLs of search results.
+                      "400":
+                        description: Bad request. The search query is missing or invalid.
 
   BedrockAgentAlias:
     Type: 'AWS::Bedrock::AgentAlias'
