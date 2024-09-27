@@ -393,7 +393,7 @@ It should look similar to the following:
   "openapi": "3.0.0",
   "info": {
     "title": "Webscrape API", 
-    "description": "An API that will take in a URL, then scrape and store the content from the URL in an S3 bucket.",
+    "description": "An API that will take in a URL, scrape data, then return back to the user.",
     "version": "1.0.0"
   },
   "paths": {
