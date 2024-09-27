@@ -289,7 +289,7 @@ def lambda_handler(event, context):
 ![Lambda config 2](images/lambda_config_2.png)
 
 
-- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the **internet-search**. Name this Lambda function **bedrock-agent-internet-search**. Copy/paste the python code below for this Lambda, the **Deploy** the function after changes:
+- You are now done setting up the webscrape Lambda function. Now, you will need to create another Lambda function following the exact same process for the **internet-search**. Name this Lambda function **bedrock-agent-internet-search**. Copy and paste the python code below into your Lambda function, then select the **Deploy** button:
 
 ```python
 import json
