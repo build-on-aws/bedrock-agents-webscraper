@@ -2,7 +2,7 @@
 # Setup Amazon Bedrock Agent to Webscrape & Internet Search via Q&A
 
 ## Introduction
-n this project, we will set up an Amazon Bedrock agent with two action groups. The first action group will enable the agent to web scrape a specific URL provided by the user, while the second action group allows the agent to perform an internet search based on a user query without requiring a URL.
+In this project, we will set up an Amazon Bedrock agent with two action groups. The first action group will enable the agent to web scrape a specific URL provided by the user, while the second action group allows the agent to perform an internet search based on a user query without requiring a URL.
 
 For those who prefer an Infrastructure-as-Code (IaC) solution, we provide an AWS CloudFormation template to deploy all the necessary resources, including the Bedrock agent, action groups, and two Lambda functions. If you prefer to deploy using AWS CloudFormation, please refer to the guide in the section below.
 
