@@ -2,25 +2,108 @@
 # Setup Amazon Bedrock Agent to Webscrape & Internet Search via Q&A
 
 ## Introduction
- We will setup an Amazon Bedrock agent with two action groups. This Bedrock agent will have the ability to webscrape a specific URL provided from the user prompt. You will also have the option to do an internet search to query something specific, without providing a URL. This setup will include creating a Bedrock agent, action group, S3 bucket, and a two Lambda functions.
+n this project, we will set up an Amazon Bedrock agent with two action groups. The first action group will enable the agent to web scrape a specific URL provided by the user, while the second action group allows the agent to perform an internet search based on a user query without requiring a URL.
+
+For those who prefer an Infrastructure-as-Code (IaC) solution, we provide an AWS CloudFormation template to deploy all the necessary resources, including the Bedrock agent, action groups, and two Lambda functions. If you prefer to deploy using AWS CloudFormation, please refer to the guide in the section below.
+
+Alternatively, this README will guide you through the step-by-step process of setting up the Amazon Bedrock agent manually using the AWS Console.
 
 ## Prerequisites
 - An active AWS Account.
 - Familiarity with AWS services like Amazon Bedrock, S3, and Lambda.
-- Access will need to be granted to the **Amazon Titan Embeddings G1 - Text** model, and **Anthropic Claude Instant** model from the Amazon Bedrock console.
+- Access will need to be granted to the **Anthropic Claude 3 Haiku** model from the Amazon Bedrock console.
   
 ## Library dependencies
 - [googlesearch-python](https://pypi.org/project/googlesearch-python/)
 - [beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
 
 
-
 ## Diagram
 
 ![Diagram](images/bedrock-agent-webscrape-diagram.jpg)
 
-## Configuration and Setup
 
+### Grant Model Access
+
+- We will need to grant access to the models that will be needed for the Amazon Bedrock agent. Navigate to the Amazon Bedrock console, then on the left of the screen, scroll down and select **Model access**. On the right, select the orange **Enable specific models** button.
+
+![Model access](images/model_access.png)
+
+- To have access to the required models, scroll down and select the checkbox for the **Anthropic: Claude 3 Haiku** model. Then in the bottom right, select **Next**, then **Submit**.
+
+
+- After, verify that the Access status of the Models are green with **Access granted**.
+
+![Access granted](images/access_granted.png)
+
+
+## Deploy resources via AWS Cloudformation:
+*Here are the instructions to deploy the resources within your environment:*
+
+***Step 1***
+
+Download the Cloudformation templates from below, then deploy in order:
+
+Click here to download template 1 🚀 - [1 - Agent-Lambda Stack](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/cfn/1-bedrock-agent-lambda-template.yaml) 
+- This next template will create an Amazon bedrock agent, action group, with an associated Lambda function.
+
+Click here to download template 3 🚀 - [2 - EC2 UI Stack](https://github.com/build-on-aws/bedrock-agents-webscraper/blob/main/cfn/2-ec2-streamlit-template.yaml)
+- This template will be used to deploy an EC2 instance that will run the code for the Streamlit UI.
+
+***Step 2***
+
+   - In your mangement console, search, then go to the CloudFormation service.
+   - Create a stack with new resources (standard)
+
+   ![Create stack](images/create_stack.png)
+
+   - Prepare template: ***Choose existing template*** -> Specify template: ***Upload a template file*** -> upload the template downloaded from the previous step. 
+
+  ![Create stack config](images/create_stack_webscrape.png)
+
+   - Next, Provide a stack name like ***webscrape-agent***, then an alias. After, select Next.
+
+   ![Stack details](images/stack_details.png)
+
+   - On the ***Configure stack options*** screen, leave every setting as default, then go to Next. 
+
+   - Scroll down to the capabilities section, and acknowledge the warning message before submitting. 
+
+   - Once the stack is complete, follow the same process and deploy the remaing two templates. After, go to the next step.
+
+![Stack complete](images/stack_complete.png)
+
+
+***Step 3***
+
+### Testing the Bedrock Agent
+
+- Navigate to the Bedrock console. Go to the toggle on the left, and under **Builder tools** select ***Agents***, then the `WebscrapeAgent-${Alias}` that was created.
+
+![navigate to agent](images/navigate_to_agent.png)
+
+
+- In the management console on the right, you have a test user interface. Enter prompts in the user interface to test your Bedrock agent.
+
+![Agent test](images/agent_test.png)
+
+
+- Example prompts for Action Groups:
+
+    1.  Webscrape this url and tell me the main features of pikachu "https://www.pokemon.com/us/pokedex/pikachu".
+
+    2. Webscrape this url and tell me the main villians that Goku had to fight on planet earth "https://en.wikipedia.org/wiki/Goku".
+
+    3. Do an internet search and tell me the top 3 best traits about lebron james
+
+    4. Do an internet search and tell me how do I know what foods are healthy for me
+
+
+- If you would like to launch the Streamlit app user interface, refer to **Step 6** below to configure the EC2 instance.
+
+
+
+## Step-by-step Configuration and Setup
 
 ### Step 1: AWS Lambda Function Configuration
 
@@ -505,6 +588,73 @@ Your configuration should look like the following:
 - **PLEASE NOTE:** when using the **webscraper** and **internet-search** functionality, you could experience some level of hallucincation, inaccuracies, or error if you attempt to ask about information that is very recent, if the prompt is too vague, or if the endpoint cannot be accessed or has a redirect. 
 
    There is also minimal control over which urls are selected during the internet search, except for the # of urls selected from within the google search function parameters. In order to help control this behavior, more engineering will need to be involved. 
+
+
+## Step 6: Setup and Run Streamlit App on EC2 (Optional)
+1. **Obtain CF template to launch the streamlit app**: Download the Cloudformation template from [here](https://github.com/build-on-aws/bedrock-agents-streamlit/blob/main/ec2-streamlit-template.yaml). This template will be used to deploy an EC2 instance that has the Streamlit code to run the UI.
+
+
+2. **Deploy template via Cloudformation**:
+   - In your mangement console, search, then go to the CloudFormation service.
+   - Create a stack with new resources (standard)
+
+   ![Create stack](images/create_stack.png)
+
+   - Prepare template: Choose existing template -> Specify template: Upload a template file -> upload the template donaloaded from the previous step. 
+
+  ![Create stack config](images/create_stack_config.png)
+
+   - Next, Provide a stack name like ***ec2-streamlit***. Keep the instance type on the default of t3.small, then go to Next.
+
+   ![Stack details](images/stack_details.png)
+
+   - On the ***Configure stack options*** screen, leave every setting as default, then go to Next. 
+
+   - Scroll down to the capabilities section, and acknowledge the warning message before submitting. 
+
+   - Once the stack is complete, go to the next step.
+
+![Stack complete](images/stack_complete.png)
+
+
+3. **Edit the app to update agent IDs**:
+   - Navigate to the EC2 instance management console. Under instances, you should see `EC2-Streamlit-App`. Select the checkbox next to it, then connect to it via `EC2 Instance Connect`.
+
+   ![ec2 connect clip](images/ec2_connect.gif)
+
+   - Next, use the following command  to edit the InvokeAgent.py file:
+     ```bash
+     sudo vi app/streamlit_app/InvokeAgent.py
+     ```
+
+   - Press ***i*** to go into edit mode. Then, update the ***AGENT ID*** and ***Agent ALIAS ID*** values. 
+   
+   ![file_edit](images/file_edit.png)
+   
+   - After, hit `Esc`, then save the file changes with the following command:
+     ```bash
+     :wq!
+     ```   
+
+   - Now, start the streamlit app:
+     ```bash
+     streamlit run app/streamlit_app/app.py
+     ```
+  
+   - You should see an external URL. Copy & paste the URL into a web browser to start the streamlit application.
+
+![External IP](images/external_ip.png)
+
+
+   - Once the app is running, please test some of the sample prompts provided. (On 1st try, if you receive an error, try again.)
+
+![Running App ](images/running_app.png)
+
+
+   - Optionally, you can review the [trace events](https://docs.aws.amazon.com/bedrock/latest/userguide/trace-events.html) in the left toggle of the screen. This data will include the **Preprocessing, Orchestration**, and **PostProcessing** traces.
+
+![Trace events ](images/trace_events.png)
+
 
 
 ## Cleanup
