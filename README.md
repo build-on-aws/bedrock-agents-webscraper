@@ -359,7 +359,7 @@ def lambda_handler(event, context):
 
 
 ### Step 3: Setup Bedrock Agent and Action Group 
-- Navigate to the Bedrock console. Go to the toggle on the left, and under **Builder tools** select ***Agents***, then ***Create Agent***. Provide an agent name, like `webscrape` then ***Create***.
+- Navigate to the Bedrock console. Go to the toggle on the left, and under **Builder tools** select ***Agents***, then ***Create Agent***. Provide an agent name, like `athena-agent` then ***Create***.
 
 
 ![agent_create](images/agent_create.png)
@@ -393,7 +393,7 @@ It should look similar to the following:
   "openapi": "3.0.0",
   "info": {
     "title": "Webscrape API", 
-    "description": "An API that will take in a URL, scrape data, then return back to the user.",
+    "description": "An API that will take in a URL, then scrape and store the content from the URL in an S3 bucket.",
     "version": "1.0.0"
   },
   "paths": {
@@ -440,8 +440,6 @@ Your configuration should look like the following:
 
 ![ag create gif](images/action_group_creation.gif)
 
-
-![Add action group](images/action_group_add.png)
 
 - After, hit **Create** and **Save and exit**.
 
