@@ -294,10 +294,11 @@ def lambda_handler(event, context):
 ```python
 import json
 import urllib.request
-import os
-import shutil
 from googlesearch import search
 from bs4 import BeautifulSoup
+import sys  # Import sys to check the size of the response
+
+MAX_RESPONSE_SIZE = 22000  # 22KB limit
 
 def get_page_content(url):
     try:
@@ -318,34 +319,6 @@ def get_page_content(url):
         print(f"Error while fetching and cleaning content from {url}: {e}")
         return None
 
-def empty_tmp_directory():
-    try:
-        folder = '/tmp'
-        for filename in os.listdir(folder):
-            file_path = os.path.join(folder, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print(f"Failed to delete {file_path}. Reason: {e}")
-        print("Temporary directory emptied.")
-    except Exception as e:
-        print(f"Error while emptying /tmp directory: {e}")
-
-def save_content_to_tmp(content, filename):
-    try:
-        if content is not None:
-            with open(f'/tmp/{filename}', 'w', encoding='utf-8') as file:
-                file.write(content)
-            print(f"Saved {filename} to /tmp")
-            return f"Saved {filename} to /tmp"
-        else:
-            raise Exception("No content to save.")
-    except Exception as e:
-        print(f"Error while saving {filename} to /tmp: {e}")
-
 def search_google(query):
     try:
         search_results = []
@@ -357,36 +330,52 @@ def search_google(query):
         return []
 
 def handle_search(event):
-    input_text = event.get('inputText', '')
+    # Extract the query from the requestBody
+    request_body = event.get('requestBody', {})
+    query = ""
 
-    print("Emptying temporary directory...")
-    empty_tmp_directory()
+    # Check if the query exists within the requestBody
+    if 'content' in request_body:
+        properties = request_body['content'].get('application/json', {}).get('properties', [])
+        query = next((prop['value'] for prop in properties if prop['name'] == 'query'), '')
 
-    print("Performing Google search...")
-    urls_to_scrape = search_google(input_text)
+    # Fallback to 'inputText' if 'query' is not provided
+    if not query:
+        query = event.get('inputText', '')
+
+    print(f"Performing Google search for query: {query}")
+    urls_to_scrape = search_google(query)
 
     aggregated_content = ""
-    results = []
+    total_size = 0  # Track the total size of the response
+    truncated = False  # Flag to indicate if the content is truncated
+    search_results = []  # To store the actual content results
+
     for url in urls_to_scrape:
         print("URLs Used: ", url)
         content = get_page_content(url)
         if content:
             print("CONTENT: ", content)
-            filename = url.split('//')[-1].replace('/', '_') + '.txt'
-            aggregated_content += f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
-            results.append({'url': url, 'status': 'Content aggregated'})
+            content_to_add = f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
+            
+            # Check size before adding more content
+            if total_size + sys.getsizeof(content_to_add) > MAX_RESPONSE_SIZE:
+                print(f"Response exceeds size limit. Truncating content...")
+                # Add as much content as possible
+                remaining_size = MAX_RESPONSE_SIZE - total_size
+                truncated_content = content_to_add[:remaining_size]
+                aggregated_content += truncated_content
+                search_results.append({"content": truncated_content, "warning": "Content truncated due to size limits"})
+                truncated = True  # Set the flag to indicate truncation
+                break  # Stop adding content
+
+            aggregated_content += content_to_add
+            total_size = sys.getsizeof(aggregated_content)  # Update the size tracker
+            search_results.append({"content": content})
         else:
-            results.append({'url': url, 'error': 'Failed to fetch content'})
+            search_results.append({'url': url, 'error': 'Failed to fetch content'})
 
-    aggregated_filename = f"aggregated_{input_text.replace(' ', '_')}.txt"
-    print("Saving aggregated content to /tmp...")
-    save_result = save_content_to_tmp(aggregated_content, aggregated_filename)
-    if save_result:
-        results.append({'aggregated_file': aggregated_filename, 'tmp_save_result': save_result})
-    else:
-        results.append({'aggregated_file': aggregated_filename, 'error': 'Failed to save aggregated content to /tmp'})
-
-    return {"results": results}
+    return {"results": search_results}
 
 def lambda_handler(event, context):
     print("THE EVENT: ", event)
