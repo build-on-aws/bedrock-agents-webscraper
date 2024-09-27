@@ -118,147 +118,180 @@ Click here to download template 2 🚀 - [2 - EC2 UI Stack](https://github.com/b
 
 
 ```python
-import urllib.request
-import os
-import shutil
-import json
-from bs4 import BeautifulSoup
+          import urllib.request
+          import os
+          import shutil
+          import json
+          import gzip
+          import io
+          from bs4 import BeautifulSoup
+          import sys  # Import sys to get the size of the response
 
-def get_page_content(url):
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req) as response:
-            if response.geturl() != url:  # Check if there were any redirects
-                print(f"Redirect detected for {url}")
-                return None
-            elif response:
-                return response.read().decode('utf-8')
-            else:
-                raise Exception("No response from the server.")
-    except Exception as e:
-        print(f"Error while fetching content from {url}: {e}")
-        return None
+          MAX_RESPONSE_SIZE = 22000  # 22KB limit
 
-def empty_tmp_folder():
-    try:
-        for filename in os.listdir('/tmp'):
-            file_path = os.path.join('/tmp', filename)
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        print("Temporary folder emptied.")
-        return "Temporary folder emptied."
-    except Exception as e:
-        print(f"Error while emptying /tmp folder: {e}")
-        return None
+          def get_page_content(url):
+              try:
+                  req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                  with urllib.request.urlopen(req) as response:
+                      # Check if the content is compressed with GZIP
+                      if response.info().get('Content-Encoding') == 'gzip':
+                          print(f"Content from {url} is GZIP encoded, decompressing...")
+                          buf = io.BytesIO(response.read())
+                          with gzip.GzipFile(fileobj=buf) as f:
+                              content = f.read().decode('utf-8')
+                      else:
+                          content = response.read().decode('utf-8')
+                      
+                      if response.geturl() != url:  # Check if there were any redirects
+                          print(f"Redirect detected for {url}")
+                          return None
 
-def save_to_tmp(filename, content):
-    try:
-        if content is not None:
-            print(content)
-            with open(f'/tmp/{filename}', 'w') as file:
-                file.write(content)
-            print(f"Saved {filename} to /tmp")
-            return f"Saved {filename} to /tmp"
-        else:
-            raise Exception("No content to save.")
-    except Exception as e:
-        print(f"Error while saving {filename} to /tmp: {e}")
-        return None
+                      return content
+              except Exception as e:
+                  print(f"Error while fetching content from {url}: {e}")
+                  return None
 
-def check_tmp_for_data(query):
-    try:
-        data = []
-        for filename in os.listdir('/tmp'):
-            if query in filename:
-                with open(f'/tmp/{filename}', 'r') as file:
-                    data.append(file.read())
-        print(f"Found {len(data)} file(s) in /tmp for query {query}")
-        return data if data else None
-    except Exception as e:
-        print(f"Error while checking /tmp for query {query}: {e}")
-        return None
+          def empty_tmp_folder():
+              try:
+                  for filename in os.listdir('/tmp'):
+                      file_path = os.path.join('/tmp', filename)
+                      if os.path.isfile(file_path) or os.path.islink(file_path):
+                          os.unlink(file_path)
+                      elif os.path.isdir(file_path):
+                          shutil.rmtree(file_path)
+                  print("Temporary folder emptied.")
+                  return "Temporary folder emptied."
+              except Exception as e:
+                  print(f"Error while emptying /tmp folder: {e}")
+                  return None
 
-def handle_search(event):
-    parameters = event.get('parameters', [])
-    input_url = next((param['value'] for param in parameters if param['name'] == 'inputURL'), '')
+          def save_to_tmp(filename, content):
+              try:
+                  if content is not None:
+                      print(content)
+                      with open(f'/tmp/{filename}', 'w') as file:
+                          file.write(content)
+                      print(f"Saved {filename} to /tmp")
+                      return f"Saved {filename} to /tmp"
+                  else:
+                      raise Exception("No content to save.")
+              except Exception as e:
+                  print(f"Error while saving {filename} to /tmp: {e}")
+                  return None
 
-    if not input_url:
-        return {"error": "No URL provided"}
+          def check_tmp_for_data(query):
+              try:
+                  data = []
+                  for filename in os.listdir('/tmp'):
+                      if query in filename:
+                          with open(f'/tmp/{filename}', 'r') as file:
+                              data.append(file.read())
+                  print(f"Found {len(data)} file(s) in /tmp for query {query}")
+                  return data if data else None
+              except Exception as e:
+                  print(f"Error while checking /tmp for query {query}: {e}")
+                  return None
 
-    if not input_url.startswith(('http://', 'https://')):
-        input_url = 'http://' + input_url
+          def handle_search(event):
+              # Extract inputURL from the requestBody content
+              request_body = event.get('requestBody', {})
+              input_url = ''
+              
+              # Check if the inputURL exists within the properties
+              if 'content' in request_body:
+                  properties = request_body['content'].get('application/json', {}).get('properties', [])
+                  input_url = next((prop['value'] for prop in properties if prop['name'] == 'inputURL'), '')
 
-    tmp_data = check_tmp_for_data(input_url)
-    if tmp_data:
-        return {"results": tmp_data}
+              # Handle missing URL
+              if not input_url:
+                  return {"error": "No URL provided"}
 
-    empty_tmp_result = empty_tmp_folder()
-    if empty_tmp_result is None:
-        return {"error": "Failed to empty /tmp folder"}
+              # Ensure URL starts with http or https
+              if not input_url.startswith(('http://', 'https://')):
+                  input_url = 'http://' + input_url
 
-    content = get_page_content(input_url)
-    if content is None:
-        return {"error": "Failed to retrieve content"}
+              # Check for existing data in /tmp
+              tmp_data = check_tmp_for_data(input_url)
+              if tmp_data:
+                  return {"results": tmp_data}
 
-    cleaned_content = parse_html_content(content)
+              # Clear /tmp folder
+              empty_tmp_result = empty_tmp_folder()
+              if empty_tmp_result is None:
+                  return {"error": "Failed to empty /tmp folder"}
 
-    filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
-    save_result = save_to_tmp(filename, cleaned_content)
+              # Get the page content
+              content = get_page_content(input_url)
+              if content is None:
+                  return {"error": "Failed to retrieve content"}
 
-    if save_result is None:
-        return {"error": "Failed to save to /tmp"}
+              # Parse and clean the HTML content
+              cleaned_content = parse_html_content(content)
 
-    return {"results": {'url': input_url, 'content': cleaned_content}}
+              # Save the content to /tmp
+              filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
+              save_result = save_to_tmp(filename, cleaned_content)
 
-def parse_html_content(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
-    for script_or_style in soup(["script", "style"]):
-        script_or_style.decompose()
-    text = soup.get_text()
-    lines = (line.strip() for line in text.splitlines())
-    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
+              if save_result is None:
+                  return {"error": "Failed to save to /tmp"}
 
-    max_size = 25000
-    if len(cleaned_text) > max_size:
-        cleaned_text = cleaned_text[:max_size]
+              # Check the size of the response and truncate if necessary
+              response_data = {'url': input_url, 'content': cleaned_content}
+              response_size = sys.getsizeof(json.dumps(response_data))
 
-    return cleaned_text
+              if response_size > MAX_RESPONSE_SIZE:
+                  print(f"Response size {response_size} exceeds limit. Truncating content...")
+                  truncated_content = cleaned_content[:(MAX_RESPONSE_SIZE - response_size)]
+                  response_data['content'] = truncated_content
 
+              return {"results": response_data}
 
-def lambda_handler(event, context):
-    response_code = 200
-    action_group = event['actionGroup']
-    api_path = event['apiPath']
+          def parse_html_content(html_content):
+              soup = BeautifulSoup(html_content, 'html.parser')
+              for script_or_style in soup(["script", "style"]):
+                  script_or_style.decompose()
+              text = soup.get_text()
+              lines = (line.strip() for line in text.splitlines())
+              chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+              cleaned_text = '\n'.join(chunk for chunk in chunks if chunk)
 
-    print("THE EVENT: ", event)
+              max_size = 25000
+              if len(cleaned_text) > max_size:
+                  cleaned_text = cleaned_text[:max_size]
 
-    if api_path == '/search':
-        result = handle_search(event)
-    else:
-        response_code = 404
-        result = f"Unrecognized api path: {action_group}::{api_path}"
+              return cleaned_text
 
-    response_body = {
-        'application/json': {
-            'body': result
-        }
-    }
+          def lambda_handler(event, context):
+              response_code = 200
+              action_group = event['actionGroup']
+              api_path = event['apiPath']
 
-    action_response = {
-        'actionGroup': event['actionGroup'],
-        'apiPath': event['apiPath'],
-        'httpMethod': event['httpMethod'],
-        'httpStatusCode': response_code,
-        'responseBody': response_body
-    }
+              print("THE EVENT: ", event)
 
-    api_response = {'messageVersion': '1.0', 'response': action_response}
-    print("action_response: ", action_response)
-    print("response_body: ", response_body)
-    return api_response
+              if api_path == '/search':
+                  result = handle_search(event)
+              else:
+                  response_code = 404
+                  result = f"Unrecognized api path: {action_group}::{api_path}"
+
+              response_body = {
+                  'application/json': {
+                      'body': result
+                  }
+              }
+
+              action_response = {
+                  'actionGroup': event['actionGroup'],
+                  'apiPath': event['apiPath'],
+                  'httpMethod': event['httpMethod'],
+                  'httpStatusCode': response_code,
+                  'responseBody': response_body
+              }
+
+              api_response = {'messageVersion': '1.0', 'response': action_response}
+              print("action_response: ", action_response)
+              print("response_body: ", response_body)
+              return api_response
 ```
 
 
@@ -294,10 +327,11 @@ def lambda_handler(event, context):
 ```python
 import json
 import urllib.request
-import os
-import shutil
 from googlesearch import search
 from bs4 import BeautifulSoup
+import sys  # Import sys to check the size of the response
+
+MAX_RESPONSE_SIZE = 22000  # 22KB limit
 
 def get_page_content(url):
     try:
@@ -318,34 +352,6 @@ def get_page_content(url):
         print(f"Error while fetching and cleaning content from {url}: {e}")
         return None
 
-def empty_tmp_directory():
-    try:
-        folder = '/tmp'
-        for filename in os.listdir(folder):
-            file_path = os.path.join(folder, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print(f"Failed to delete {file_path}. Reason: {e}")
-        print("Temporary directory emptied.")
-    except Exception as e:
-        print(f"Error while emptying /tmp directory: {e}")
-
-def save_content_to_tmp(content, filename):
-    try:
-        if content is not None:
-            with open(f'/tmp/{filename}', 'w', encoding='utf-8') as file:
-                file.write(content)
-            print(f"Saved {filename} to /tmp")
-            return f"Saved {filename} to /tmp"
-        else:
-            raise Exception("No content to save.")
-    except Exception as e:
-        print(f"Error while saving {filename} to /tmp: {e}")
-
 def search_google(query):
     try:
         search_results = []
@@ -359,32 +365,31 @@ def search_google(query):
 def handle_search(event):
     input_text = event.get('inputText', '')
 
-    print("Emptying temporary directory...")
-    empty_tmp_directory()
-
     print("Performing Google search...")
     urls_to_scrape = search_google(input_text)
 
     aggregated_content = ""
     results = []
+    total_size = 0  # Track the total size of the response
+
     for url in urls_to_scrape:
         print("URLs Used: ", url)
         content = get_page_content(url)
         if content:
             print("CONTENT: ", content)
-            filename = url.split('//')[-1].replace('/', '_') + '.txt'
-            aggregated_content += f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
+            content_to_add = f"URL: {url}\n\n{content}\n\n{'='*100}\n\n"
+            
+            # Check size before adding more content
+            if total_size + sys.getsizeof(content_to_add) > MAX_RESPONSE_SIZE:
+                print(f"Response exceeds size limit. Truncating content...")
+                break  # Stop adding content if the limit is reached
+
+            aggregated_content += content_to_add
+            total_size = sys.getsizeof(aggregated_content)  # Update the size tracker
+
             results.append({'url': url, 'status': 'Content aggregated'})
         else:
             results.append({'url': url, 'error': 'Failed to fetch content'})
-
-    aggregated_filename = f"aggregated_{input_text.replace(' ', '_')}.txt"
-    print("Saving aggregated content to /tmp...")
-    save_result = save_content_to_tmp(aggregated_content, aggregated_filename)
-    if save_result:
-        results.append({'aggregated_file': aggregated_filename, 'tmp_save_result': save_result})
-    else:
-        results.append({'aggregated_file': aggregated_filename, 'error': 'Failed to save aggregated content to /tmp'})
 
     return {"results": results}
 
