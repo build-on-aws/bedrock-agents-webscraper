@@ -2,5 +2,5 @@ streamlit
 pandas
 Pillow
 boto3
-lxml
+lxml[html_clean]
 
