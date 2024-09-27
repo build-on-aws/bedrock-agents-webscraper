@@ -1,58 +1,39 @@
-{
-  "openapi": "3.0.0",
-  "info": {
-    "title": "Internet Search API", 
-    "description": "An API that will take in user input, then will conduct an internet search that matches the inquiry as close as possible",
-    "version": "1.0.0"
-  },
-  "paths": {
-    "/search": {
-      "post": {
-        "description": "Internet search endpoint",
-        "parameters": [
-          {
-            "name": "query",
-            "in": "query",
-            "description": "Search query text",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Additional internet serach parameters",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "depth": {
-                    "type": "integer",
-                    "description": "Maximum search depth"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
+openapi: 3.0.0
+info:
+  title: Internet Search API
+  version: 1.0.0
+  description: An API that will take in user input, then conduct an internet search that matches the inquiry as close as possible.
+paths:
+  /search:
+    post:
+      summary: Conduct an internet search based on user input
+      description: Takes a user input query, conducts an internet search, and returns the search results.
+      operationId: conductInternetSearch
+      requestBody:
+        description: The search query and additional internet search parameters.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: The search query text provided by the user.
+                depth:
+                  type: integer
+                  description: The maximum search depth to limit the results.
+              required:
+                - query
+      responses:
+        "200":
+          description: Successfully conducted the search and returned results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: URLs of search results.
+        "400":
+          description: Bad request. The search query is missing or invalid.
