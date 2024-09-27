@@ -527,7 +527,7 @@ Resources:
         - ActionGroupName: "webscrape"
           Description: "This action group is used to search the internet based on a web URL."
           ActionGroupExecutor:
-            Lambda: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:WebscrapeLambda-${AWS::AccountId}'
+            Lambda: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:WebscrapeLambda-${Alias}'
           ApiSchema:
             Payload: |
               openapi: 3.0.0
