@@ -1,5 +1,5 @@
 
-# Setup Amazon Bedrock Agent to Webscrape & Internet Search Using Natural Language
+# Setup Amazon Bedrock Agent to Webscrape & Internet Search Using NLQ Natural Language Queries (NLQ)
 
 ## Introduction
 In this project, we will set up an Amazon Bedrock agent with two action groups. The first action group will enable the agent to web scrape a specific URL provided by the user, while the second action group allows the agent to perform an internet search based on a user query without requiring a URL.
