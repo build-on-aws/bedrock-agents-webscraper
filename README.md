@@ -601,6 +601,8 @@ paths:
    Do an internet search and tell me the top 3 strongest features of charizard from pokemon
  ```   
 
+**(If you receive an error saying that the request rate is too high, switch to the Anthropic Claude 3 Haiku model, save & exit, then prepare before testing again. Also, make sure that the Haiku model is enabled)**
+
 ![Agent test 3](images/agent_test_3.png)
 
    (After executing the internet-search function, you can navigate to the CloudWatch logs for this Lambda function thats connected to the action group, and observe the URLs that the data was scraped from with details. You will notice that all URLs will not allow scraping, so the code is designed to error those attempts, and continue with the operation.)
