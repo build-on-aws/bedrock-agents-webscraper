@@ -122,19 +122,31 @@ import urllib.request
 import os
 import shutil
 import json
+import gzip
+import io
 from bs4 import BeautifulSoup
+import sys  # Import sys to get the size of the response
+
+MAX_RESPONSE_SIZE = 22000  # 22KB limit
 
 def get_page_content(url):
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req) as response:
+            # Check if the content is compressed with GZIP
+            if response.info().get('Content-Encoding') == 'gzip':
+                print(f"Content from {url} is GZIP encoded, decompressing...")
+                buf = io.BytesIO(response.read())
+                with gzip.GzipFile(fileobj=buf) as f:
+                    content = f.read().decode('utf-8')
+            else:
+                content = response.read().decode('utf-8')
+            
             if response.geturl() != url:  # Check if there were any redirects
                 print(f"Redirect detected for {url}")
                 return None
-            elif response:
-                return response.read().decode('utf-8')
-            else:
-                raise Exception("No response from the server.")
+
+            return content
     except Exception as e:
         print(f"Error while fetching content from {url}: {e}")
         return None
@@ -181,36 +193,58 @@ def check_tmp_for_data(query):
         return None
 
 def handle_search(event):
-    parameters = event.get('parameters', [])
-    input_url = next((param['value'] for param in parameters if param['name'] == 'inputURL'), '')
+    # Extract inputURL from the requestBody content
+    request_body = event.get('requestBody', {})
+    input_url = ''
+    
+    # Check if the inputURL exists within the properties
+    if 'content' in request_body:
+        properties = request_body['content'].get('application/json', {}).get('properties', [])
+        input_url = next((prop['value'] for prop in properties if prop['name'] == 'inputURL'), '')
 
+    # Handle missing URL
     if not input_url:
         return {"error": "No URL provided"}
 
+    # Ensure URL starts with http or https
     if not input_url.startswith(('http://', 'https://')):
         input_url = 'http://' + input_url
 
+    # Check for existing data in /tmp
     tmp_data = check_tmp_for_data(input_url)
     if tmp_data:
         return {"results": tmp_data}
 
+    # Clear /tmp folder
     empty_tmp_result = empty_tmp_folder()
     if empty_tmp_result is None:
         return {"error": "Failed to empty /tmp folder"}
 
+    # Get the page content
     content = get_page_content(input_url)
     if content is None:
         return {"error": "Failed to retrieve content"}
 
+    # Parse and clean the HTML content
     cleaned_content = parse_html_content(content)
 
+    # Save the content to /tmp
     filename = input_url.split('//')[-1].replace('/', '_') + '.txt'
     save_result = save_to_tmp(filename, cleaned_content)
 
     if save_result is None:
         return {"error": "Failed to save to /tmp"}
 
-    return {"results": {'url': input_url, 'content': cleaned_content}}
+    # Check the size of the response and truncate if necessary
+    response_data = {'url': input_url, 'content': cleaned_content}
+    response_size = sys.getsizeof(json.dumps(response_data))
+
+    if response_size > MAX_RESPONSE_SIZE:
+        print(f"Response size {response_size} exceeds limit. Truncating content...")
+        truncated_content = cleaned_content[:(MAX_RESPONSE_SIZE - response_size)]
+        response_data['content'] = truncated_content
+
+    return {"results": response_data}
 
 def parse_html_content(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -226,7 +260,6 @@ def parse_html_content(html_content):
         cleaned_text = cleaned_text[:max_size]
 
     return cleaned_text
-
 
 def lambda_handler(event, context):
     response_code = 200
