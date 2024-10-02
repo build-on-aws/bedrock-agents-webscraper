@@ -11,7 +11,7 @@ Alternatively, this README will guide you through the step-by-step process of se
 ## Prerequisites
 - An active AWS Account.
 - Familiarity with AWS services like Amazon Bedrock, and AWS Lambda.
-- Access will need to be granted to the **Anthropic Claude Sonnet 3.5** model from the Amazon Bedrock console.
+- Access will need to be granted to the **Anthropic Claude 3.5 Sonnet** model from the Amazon Bedrock console.
   
 ## Library dependencies
 - [googlesearch-python](https://pypi.org/project/googlesearch-python/)
@@ -29,7 +29,7 @@ Alternatively, this README will guide you through the step-by-step process of se
 
 ![Model access](images/model_access.png)
 
-- To have access to the required models, scroll down and select the checkbox for the **Anthropic: Claude Sonnet 3.5** model. Then in the bottom right, select **Next**, then **Submit**.
+- To have access to the required models, scroll down and select the checkbox for the **Anthropic: Claude 3.5 Sonnet** model. Then in the bottom right, select **Next**, then **Submit**.
 
 
 - After, verify that the Access status of the Model is green with **Access granted**.
@@ -469,7 +469,7 @@ def lambda_handler(event, context):
 
 ![agent_create](images/agent_create.png)
 
-- For this next screen, agent description is optional. Use the default new service role. For the model, select **Anthropic Claude Sonnet 3.5**. Next, provide the following instruction for the agent:
+- For this next screen, agent description is optional. Use the default new service role. For the model, select **Anthropic Claude 3.5 Sonnet**. Next, provide the following instruction for the agent:
 
 
 ```instruction
