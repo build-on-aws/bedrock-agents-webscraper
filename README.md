@@ -634,7 +634,7 @@ paths:
    Do an internet search and tell me the top 3 strongest features of charizard from pokemon
  ```   
 
-**(If you receive an error saying that the request rate is too high, switch to the Anthropic Claude 3 Haiku model, save & exit, then prepare before testing again. Also, make sure that the Haiku model is enabled)**
+**(If you receive an error saying that the request rate is too high, switch to the Anthropic Claude 3 Haiku model, save & exit, then prepare before testing again. Also, make sure that you enable access to the Haiku model.)**
 
 ![Agent test 3](images/agent_test_3.png)
 
