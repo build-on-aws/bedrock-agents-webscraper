@@ -1,6 +1,26 @@
 
 # Setup Amazon Bedrock Agent to Webscrape & Internet Search Using Natural Language
 
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Prerequisites](#prerequisites)
+3. [Library dependencies](#library-dependencies)
+4. [Diagram](#diagram)
+5. [Grant Model Access](#grant-model-access)
+6. [Deploy Resources via AWS CloudFormation for the Amazon Bedrock Agent](#deploy-resources-via-aws-cloudformation-for-the-amazon-bedrock-agent)
+7. [Step-by-step Setup for the Amazon Bedrock Agent](#step-by-step-setup-for-the-amazon-bedrock-agent)
+   - [Step 1: AWS Lambda Function Configuration](#step-1-aws-lambda-function-configuration)
+   - [Step 2: Create & Attach an AWS Lambda Layer](#step-2-create--attach-an-aws-lambda-layer)
+   - [Step 3: Setup Bedrock Agent and Action Group](#step-3-setup-bedrock-agent-and-action-group)
+   - [Step 4: Create an Alias](#step-4-create-an-alias)
+8. [Step 5: Testing the Setup](#step-5-testing-the-setup)
+   - [Testing the Bedrock Agent](#testing-the-bedrock-agent)
+9. [Step 6: Setup and Run Streamlit App on EC2 (Optional)](#step-6-setup-and-run-streamlit-app-on-ec2-optional)
+10. [Cleanup](#cleanup)
+11. [Security](#security)
+12. [License](#license)
+
+
 ## Introduction
 In this project, we will set up an Amazon Bedrock agent with two action groups. The first action group will enable the agent to web scrape a specific URL provided by the user, while the second action group allows the agent to perform an internet search based on a user query without requiring a URL.
 
